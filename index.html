@@ -1,1 +1,215 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Panel - Earning App</title>
+    
+    <!-- External CSS File -->
+    <link rel="stylesheet" href="css/style.css">
+    
+    <!-- Font Awesome for icons (CDN) -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+</head>
+<body>
+    <div class="container">
+        <!-- Sidebar -->
+        <div class="sidebar">
+            <div class="sidebar-header">
+                <h2><i class="fas fa-crown"></i> Admin Panel</h2>
+            </div>
+            <div class="sidebar-menu">
+                <div class="menu-item active" data-section="dashboard">
+                    <i class="fas fa-tachometer-alt"></i> Dashboard
+                </div>
+                <div class="menu-item" data-section="users">
+                    <i class="fas fa-users"></i> Users
+                </div>
+                <div class="menu-item" data-section="withdrawals">
+                    <i class="fas fa-money-bill-wave"></i> Withdrawals
+                </div>
+                <div class="menu-item" data-section="settings">
+                    <i class="fas fa-cog"></i> Settings
+                </div>
+            </div>
+        </div>
+        
+        <!-- Main Content -->
+        <div class="main-content">
+            <div class="header">
+                <h1 id="content-title">Dashboard</h1>
+                <div class="user-info">
+                    <img src="https://via.placeholder.com/40" alt="Admin" id="admin-avatar">
+                    <span id="admin-name">Admin User</span>
+                    <button class="logout-btn" id="logout-btn">Logout</button>
+                </div>
+            </div>
+            
+            <!-- Dashboard Section -->
+            <div id="dashboard-section" class="content-section">
+                <div class="dashboard-cards">
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Total Users</h3>
+                            <div class="card-icon users"><i class="fas fa-users"></i></div>
+                        </div>
+                        <div class="card-value" id="total-users">0</div>
+                        <div class="card-footer">All registered users</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Total Earnings</h3>
+                            <div class="card-icon earnings"><i class="fas fa-coins"></i></div>
+                        </div>
+                        <div class="card-value" id="total-earnings">0 USDT</div>
+                        <div class="card-footer">From all users</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Withdrawals</h3>
+                            <div class="card-icon withdrawals"><i class="fas fa-money-bill-wave"></i></div>
+                        </div>
+                        <div class="card-value" id="total-withdrawals">0 USDT</div>
+                        <div class="card-footer">Total withdrawn</div>
+                    </div>
+                    <div class="card">
+                        <div class="card-header">
+                            <h3 class="card-title">Active Users</h3>
+                            <div class="card-icon active"><i class="fas fa-user-check"></i></div>
+                        </div>
+                        <div class="card-value" id="active-users">0</div>
+                        <div class="card-footer">Active today</div>
+                    </div>
+                </div>
+                <div class="table-container">
+                    <div class="table-header">
+                        <h3 class="table-title">Recent Withdrawals</h3>
+                        <input type="text" class="search-box" placeholder="Search withdrawals...">
+                    </div>
+                    <table id="recent-withdrawals">
+                        <thead>
+                            <tr><th>User</th><th>Amount</th><th>Method</th><th>Date</th><th>Status</th><th>Actions</th></tr>
+                        </thead>
+                        <tbody><!-- Populated by JavaScript --></tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Users Section -->
+            <div id="users-section" class="content-section" style="display: none;">
+                <div class="table-container">
+                    <div class="table-header">
+                        <h3 class="table-title">All Users</h3>
+                        <div>
+                            <input type="text" class="search-box" id="user-search" placeholder="Search users...">
+                            <button class="btn btn-primary" id="add-user-btn">Add User</button>
+                        </div>
+                    </div>
+                    <table id="users-table">
+                        <thead>
+                            <tr><th>ID</th><th>Email</th><th>Balance</th><th>Joined</th><th>Status</th><th>Actions</th></tr>
+                        </thead>
+                        <tbody><!-- Populated by JavaScript --></tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Withdrawals Section -->
+            <div id="withdrawals-section" class="content-section" style="display: none;">
+                <div class="table-container">
+                    <div class="table-header">
+                        <h3 class="table-title">Withdrawal Requests</h3>
+                        <input type="text" class="search-box" id="withdrawal-search" placeholder="Search withdrawals...">
+                    </div>
+                    <table id="withdrawals-table">
+                        <thead>
+                            <tr><th>User</th><th>Amount</th><th>Method</th><th>Date</th><th>Status</th><th>Actions</th></tr>
+                        </thead>
+                        <tbody><!-- Populated by JavaScript --></tbody>
+                    </table>
+                </div>
+            </div>
+            
+            <!-- Settings Section -->
+            <div id="settings-section" class="content-section" style="display: none;">
+                <div class="table-container">
+                    <h3 class="table-title">App Settings</h3>
+                    <form id="settings-form">
+                        <div class="form-group"><label for="daily-task-limit">Daily Task Limit</label><input type="number" class="form-control" id="daily-task-limit" required></div>
+                        <div class="form-group"><label for="task-reward">Task Reward (USDT)</label><input type="number" step="0.0001" class="form-control" id="task-reward" required></div>
+                        <div class="form-group"><label for="referral-reward">Referral Reward (USDT)</label><input type="number" step="0.01" class="form-control" id="referral-reward" required></div>
+                        <div class="form-group"><label for="daily-referral-limit">Daily Referral Limit</label><input type="number" class="form-control" id="daily-referral-limit" required></div>
+                        <div class="form-group"><label for="min-withdrawal">Minimum Withdrawal (USDT)</label><input type="number" class="form-control" id="min-withdrawal" required></div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" id="cancel-settings">Cancel</button>
+                            <button type="submit" class="btn btn-primary">Save Settings</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Add User Modal -->
+    <div class="modal" id="add-user-modal">
+        <div class="modal-content">
+            <div class="modal-header"><h3 class="modal-title">Add New User</h3><button class="close-btn" id="close-add-user-modal">×</button></div>
+            <form id="add-user-form">
+                <div class="form-group"><label for="user-email">Email</label><input type="email" class="form-control" id="user-email" required></div>
+                <div class="form-group"><label for="user-password">Password</label><input type="password" class="form-control" id="user-password" required minlength="6"></div>
+                <div class="form-group"><label for="user-balance">Initial Balance (USDT)</label><input type="number" step="0.01" class="form-control" id="user-balance" required></div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" id="cancel-add-user">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Add User</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Edit User Modal -->
+    <div class="modal" id="edit-user-modal">
+        <div class="modal-content">
+            <div class="modal-header"><h3 class="modal-title">Edit User</h3><button class="close-btn" id="close-edit-user-modal">×</button></div>
+            <form id="edit-user-form">
+                <input type="hidden" id="edit-user-id">
+                <div class="form-group"><label for="edit-user-email">Email</label><input type="email" class="form-control" id="edit-user-email" required></div>
+                <div class="form-group"><label for="edit-user-balance">Balance (USDT)</label><input type="number" step="0.01" class="form-control" id="edit-user-balance" required></div>
+                <div class="form-group">
+                    <label for="edit-user-status">Status</label>
+                    <select class="form-control" id="edit-user-status" required>
+                        <option value="active">Active</option>
+                        <option value="banned">Banned</option>
+                    </select>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" id="cancel-edit-user">Cancel</button>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <!-- Withdrawal Details Modal -->
+    <div class="modal" id="withdrawal-modal">
+        <div class="modal-content">
+            <div class="modal-header"><h3 class="modal-title">Withdrawal Details</h3><button class="close-btn" id="close-withdrawal-modal">×</button></div>
+            <div id="withdrawal-details"><!-- Populated by JavaScript --></div>
+            <div class="modal-footer" id="withdrawal-actions">
+                <button type="button" class="btn btn-secondary" id="cancel-withdrawal">Close</button>
+                <button type="button" class="btn btn-primary approve-btn" id="approve-withdrawal">Approve</button>
+                <button type="button" class="btn btn-danger reject-btn" id="reject-withdrawal">Reject</button>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Firebase SDK (CDN) -->
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
+
+    <!-- External JavaScript Files -->
+    <script src="js/firebase-config.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
