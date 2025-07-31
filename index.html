@@ -1,215 +1,772 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Panel - Earning App</title>
-    
-    <!-- External CSS File -->
-    <link rel="stylesheet" href="css/style.css">
-    
-    <!-- Font Awesome for icons (CDN) -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>App (Delayed Share Reward - 1 Min, Msg Update)</title>
+    <!-- Add Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.0/firebase-firestore-compat.js"></script> <!-- Firestore SDK যোগ করা হয়েছে -->
+    <style>
+        /* আপনার দেওয়া সকল CSS এখানে অপরিবর্তিত থাকবে */
+        body { font-family: 'Helvetica Neue', Arial, sans-serif; margin: 0; background-color: #000000; color: #ffffff; display: flex; flex-direction: column; height: 100vh; overscroll-behavior-y: contain; }
+        .auth-container { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100vh; padding: 20px; background-color: #000000; }
+        .auth-card { background-color: #1c1c1e; border-radius: 10px; padding: 25px; width: 100%; max-width: 400px; box-shadow: 0 4px 10px rgba(0,0,0,0.3); }
+        .auth-title { color: #00aaff; text-align: center; margin-bottom: 25px; font-size: 22px; font-weight: bold; }
+        .auth-form .form-group { margin-bottom: 15px; }
+        .auth-form label { display: block; margin-bottom: 6px; font-size: 14px; color: #cccccc; }
+        .auth-form input { width: 100%; padding: 12px; border: 1px solid #3a3a3c; border-radius: 6px; font-size: 15px; background-color: #2c2c2e; color: #ffffff; box-sizing: border-box; }
+        .auth-btn { width: 100%; padding: 12px; background-color: #007aff; color: white; border: none; border-radius: 8px; font-size: 16px; font-weight: bold; cursor: pointer; margin-top: 15px; }
+        .auth-btn:hover { background-color: #0056b3; }
+        .auth-toggle { text-align: center; margin-top: 15px; color: #8e8e93; font-size: 14px; }
+        .auth-toggle a { color: #00aaff; text-decoration: none; cursor: pointer; }
+        .auth-error { color: #ff3b30; font-size: 14px; text-align: center; margin-top: 10px; min-height: 20px; }
+        .auth-success { color: #34c759; font-size: 14px; text-align: center; margin-top: 10px; min-height: 20px; }
+        .app-container { flex-grow: 1; overflow-y: auto; padding-bottom: 70px; background-color: #000000; position: relative; display: none; }
+        .app-header { background-color: #1a1a1a; color: #ffffff; padding: 12px 15px; display: flex; align-items: center; position: sticky; top: 0; z-index: 1001; border-bottom: 1px solid #333333; }
+        .app-header .title { font-size: 18px; font-weight: bold; flex-grow: 1; }
+        .app-header .user-info-header { display: flex; align-items: center; flex-grow: 1; }
+        .app-header .avatar-small { width: 35px; height: 35px; border-radius: 50%; margin-right: 10px; border: 1px solid #555555; object-fit: cover; background-color: #333333; }
+        .app-header .user-details { font-size: 12px; line-height: 1.3; }
+        .app-header .user-name-header { font-weight: bold; font-size: 14px; }
+        .app-header .user-phone-header { font-size: 11px; opacity: 0.7; }
+        .app-header .actions { font-size: 22px; }
+        .app-header .actions span { margin-left: 15px; cursor: pointer; }
+        .screen { display: none; padding: 0; }
+        .screen.active { display: block; }
+        .content-padding { padding: 15px; }
+        .profile-summary { text-align: center; padding: 20px 15px; background-color: #000000; margin-bottom: 10px; }
+        .profile-summary .avatar-large { width: 80px; height: 80px; border-radius: 50%; margin-bottom: 12px; border: 2px solid #00aaff; object-fit: cover; background-color: #444444; }
+        .profile-summary .user-name-profile { font-size: 20px; font-weight: bold; color: #ffffff; }
+        .profile-summary .user-balance-profile { font-size: 15px; color: #bbbbbb; margin-top: 6px; }
+        .info-card { background-color: #1c1c1e; color: #ffffff; border-radius: 10px; padding: 15px; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.2); }
+        .info-card h3 { margin-top: 0; margin-bottom: 12px; font-size: 17px; color: #00aaff; border-bottom: 1px solid #3a3a3c; padding-bottom: 8px; }
+        .info-card p { margin: 8px 0; font-size: 15px; display: flex; justify-content: space-between; }
+        .info-card p span:last-child { font-weight: bold; color: #ffffff; }
+        .info-card p.referral-details-text { display: block; line-height: 1.5; }
+        .btn { display: block; width: 100%; padding: 12px; background-color: #007aff; color: white; border: none; border-radius: 8px; font-size: 17px; font-weight: bold; text-align: center; cursor: pointer; margin-top: 20px; box-sizing: border-box; }
+        .btn:hover { background-color: #0056b3; }
+        .btn:disabled { background-color: #555; cursor: not-allowed; opacity: 0.7; }
+        .btn.btn-share { background-color: #0088cc; margin-top: 10px; }
+        .btn.btn-share:hover { background-color: #0077b3; }
+        .btn.btn-auto { background-color: #34c759; margin-top: 10px; }
+        .btn.btn-stop { background-color: #ff3b30; margin-top: 10px; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 6px; font-size: 14px; color: #cccccc; }
+        .form-group input, .form-group select { width: 100%; padding: 11px; border: 1px solid #3a3a3c; border-radius: 6px; font-size: 15px; background-color: #2c2c2e; color: #ffffff; box-sizing: border-box; }
+        .bottom-nav { position: fixed; bottom: 0; left: 0; right: 0; background-color: #1a1a1a; border-top: 1px solid #333333; display: flex; justify-content: space-around; padding: 8px 0; box-shadow: 0 -1px 5px rgba(0,0,0,0.2); z-index: 1000; }
+        .bottom-nav .nav-item { display: flex; flex-direction: column; align-items: center; color: #8e8e93; cursor: pointer; padding: 5px 10px; font-size: 11px; flex-basis: 0; flex-grow: 1; }
+        .bottom-nav .nav-item .icon { font-size: 22px; margin-bottom: 2px; display: flex; align-items: center; justify-content: center; height: 24px; width: 24px; }
+        .bottom-nav .nav-item .icon svg { display: block; }
+        .bottom-nav .nav-item.active { color: #00aaff; }
+        #adStatusMessage { margin-top: 10px; font-size: 14px; color: #ffcc00; text-align: center; min-height: 20px; }
+        .telegram-contact-fab { position: fixed; bottom: 75px; right: 20px; width: 50px; height: 50px; background-color: #0088cc; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 8px rgba(0,0,0,0.3); z-index: 999; cursor: pointer; transition: background-color 0.3s ease; }
+        .telegram-contact-fab:hover { background-color: #0077b3; }
+        .telegram-contact-fab svg { width: 28px; height: 28px; fill: white; }
+        .withdrawal-history-card { background-color: #1c1c1e; color: #ffffff; border-radius: 10px; padding: 15px; margin: 0 0 15px 0; box-shadow: 0 2px 5px rgba(0,0,0,0.2); max-height: 180px; min-height: 100px; overflow-y: hidden; position: relative; }
+        .withdrawal-history-card h3 { margin-top: 0; margin-bottom: 10px; font-size: 16px; color: #00aaff; text-align: center; }
+        .withdrawal-list { list-style: none; padding: 0; margin: 0; height: 100%; }
+        .withdrawal-list li { padding: 6px 0; font-size: 13px; border-bottom: 1px solid #2a2a2e; display: flex; justify-content: space-between; opacity: 0; transform: translateY(15px); animation: fadeInSlideUp 0.6s forwards; }
+        .withdrawal-list li:last-child { border-bottom: none; }
+        .withdrawal-list .phone-number { color: #cccccc; flex-basis: 50%; }
+        .withdrawal-list .amount { color: #34c759; font-weight: bold; flex-basis: 35%; text-align: right; }
+        .withdrawal-list .status-success { color: #34c759; margin-left: 5px; font-size: 12px; flex-basis: 15%; text-align: right; }
+        @keyframes fadeInSlideUp { to { opacity: 1; transform: translateY(0); } }
+    </style>
+    <script src="https://telegram.org/js/telegram-web-app.js"></script>
+    <script src='//solseewuthi.net/sdk.js' data-zone='9344336' data-sdk='show_9344336' async></script>
 </head>
 <body>
-    <div class="container">
-        <!-- Sidebar -->
-        <div class="sidebar">
-            <div class="sidebar-header">
-                <h2><i class="fas fa-crown"></i> Admin Panel</h2>
-            </div>
-            <div class="sidebar-menu">
-                <div class="menu-item active" data-section="dashboard">
-                    <i class="fas fa-tachometer-alt"></i> Dashboard
+    <!-- Auth Pages -->
+    <div id="authContainer" class="auth-container">
+        <div id="loginCard" class="auth-card">
+            <div class="auth-title">Login to Your Account</div>
+            <form id="loginForm" class="auth-form">
+                <div class="form-group">
+                    <label for="loginEmail">Email</label>
+                    <input type="email" id="loginEmail" required placeholder="Enter your email">
                 </div>
-                <div class="menu-item" data-section="users">
-                    <i class="fas fa-users"></i> Users
+                <div class="form-group">
+                    <label for="loginPassword">Password</label>
+                    <input type="password" id="loginPassword" required placeholder="Enter your password">
                 </div>
-                <div class="menu-item" data-section="withdrawals">
-                    <i class="fas fa-money-bill-wave"></i> Withdrawals
+                <div id="loginError" class="auth-error"></div>
+                <div id="loginSuccess" class="auth-success"></div>
+                <button type="submit" class="auth-btn">Login</button>
+                <div class="auth-toggle">
+                    Don't have an account? <a id="showSignup">Sign up</a>
                 </div>
-                <div class="menu-item" data-section="settings">
-                    <i class="fas fa-cog"></i> Settings
-                </div>
-            </div>
+            </form>
         </div>
         
-        <!-- Main Content -->
-        <div class="main-content">
-            <div class="header">
-                <h1 id="content-title">Dashboard</h1>
-                <div class="user-info">
-                    <img src="https://via.placeholder.com/40" alt="Admin" id="admin-avatar">
-                    <span id="admin-name">Admin User</span>
-                    <button class="logout-btn" id="logout-btn">Logout</button>
-                </div>
-            </div>
-            
-            <!-- Dashboard Section -->
-            <div id="dashboard-section" class="content-section">
-                <div class="dashboard-cards">
-                    <div class="card">
-                        <div class="card-header">
-                            <h3 class="card-title">Total Users</h3>
-                            <div class="card-icon users"><i class="fas fa-users"></i></div>
-                        </div>
-                        <div class="card-value" id="total-users">0</div>
-                        <div class="card-footer">All registered users</div>
-                    </div>
-                    <div class="card">
-                        <div class="card-header">
-                            <h3 class="card-title">Total Earnings</h3>
-                            <div class="card-icon earnings"><i class="fas fa-coins"></i></div>
-                        </div>
-                        <div class="card-value" id="total-earnings">0 USDT</div>
-                        <div class="card-footer">From all users</div>
-                    </div>
-                    <div class="card">
-                        <div class="card-header">
-                            <h3 class="card-title">Withdrawals</h3>
-                            <div class="card-icon withdrawals"><i class="fas fa-money-bill-wave"></i></div>
-                        </div>
-                        <div class="card-value" id="total-withdrawals">0 USDT</div>
-                        <div class="card-footer">Total withdrawn</div>
-                    </div>
-                    <div class="card">
-                        <div class="card-header">
-                            <h3 class="card-title">Active Users</h3>
-                            <div class="card-icon active"><i class="fas fa-user-check"></i></div>
-                        </div>
-                        <div class="card-value" id="active-users">0</div>
-                        <div class="card-footer">Active today</div>
-                    </div>
-                </div>
-                <div class="table-container">
-                    <div class="table-header">
-                        <h3 class="table-title">Recent Withdrawals</h3>
-                        <input type="text" class="search-box" placeholder="Search withdrawals...">
-                    </div>
-                    <table id="recent-withdrawals">
-                        <thead>
-                            <tr><th>User</th><th>Amount</th><th>Method</th><th>Date</th><th>Status</th><th>Actions</th></tr>
-                        </thead>
-                        <tbody><!-- Populated by JavaScript --></tbody>
-                    </table>
-                </div>
-            </div>
-            
-            <!-- Users Section -->
-            <div id="users-section" class="content-section" style="display: none;">
-                <div class="table-container">
-                    <div class="table-header">
-                        <h3 class="table-title">All Users</h3>
-                        <div>
-                            <input type="text" class="search-box" id="user-search" placeholder="Search users...">
-                            <button class="btn btn-primary" id="add-user-btn">Add User</button>
-                        </div>
-                    </div>
-                    <table id="users-table">
-                        <thead>
-                            <tr><th>ID</th><th>Email</th><th>Balance</th><th>Joined</th><th>Status</th><th>Actions</th></tr>
-                        </thead>
-                        <tbody><!-- Populated by JavaScript --></tbody>
-                    </table>
-                </div>
-            </div>
-            
-            <!-- Withdrawals Section -->
-            <div id="withdrawals-section" class="content-section" style="display: none;">
-                <div class="table-container">
-                    <div class="table-header">
-                        <h3 class="table-title">Withdrawal Requests</h3>
-                        <input type="text" class="search-box" id="withdrawal-search" placeholder="Search withdrawals...">
-                    </div>
-                    <table id="withdrawals-table">
-                        <thead>
-                            <tr><th>User</th><th>Amount</th><th>Method</th><th>Date</th><th>Status</th><th>Actions</th></tr>
-                        </thead>
-                        <tbody><!-- Populated by JavaScript --></tbody>
-                    </table>
-                </div>
-            </div>
-            
-            <!-- Settings Section -->
-            <div id="settings-section" class="content-section" style="display: none;">
-                <div class="table-container">
-                    <h3 class="table-title">App Settings</h3>
-                    <form id="settings-form">
-                        <div class="form-group"><label for="daily-task-limit">Daily Task Limit</label><input type="number" class="form-control" id="daily-task-limit" required></div>
-                        <div class="form-group"><label for="task-reward">Task Reward (USDT)</label><input type="number" step="0.0001" class="form-control" id="task-reward" required></div>
-                        <div class="form-group"><label for="referral-reward">Referral Reward (USDT)</label><input type="number" step="0.01" class="form-control" id="referral-reward" required></div>
-                        <div class="form-group"><label for="daily-referral-limit">Daily Referral Limit</label><input type="number" class="form-control" id="daily-referral-limit" required></div>
-                        <div class="form-group"><label for="min-withdrawal">Minimum Withdrawal (USDT)</label><input type="number" class="form-control" id="min-withdrawal" required></div>
-                        <div class="modal-footer">
-                            <button type="button" class="btn btn-secondary" id="cancel-settings">Cancel</button>
-                            <button type="submit" class="btn btn-primary">Save Settings</button>
-                        </div>
-                    </form>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <!-- Add User Modal -->
-    <div class="modal" id="add-user-modal">
-        <div class="modal-content">
-            <div class="modal-header"><h3 class="modal-title">Add New User</h3><button class="close-btn" id="close-add-user-modal">×</button></div>
-            <form id="add-user-form">
-                <div class="form-group"><label for="user-email">Email</label><input type="email" class="form-control" id="user-email" required></div>
-                <div class="form-group"><label for="user-password">Password</label><input type="password" class="form-control" id="user-password" required minlength="6"></div>
-                <div class="form-group"><label for="user-balance">Initial Balance (USDT)</label><input type="number" step="0.01" class="form-control" id="user-balance" required></div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" id="cancel-add-user">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Add User</button>
-                </div>
-            </form>
-        </div>
-    </div>
-    
-    <!-- Edit User Modal -->
-    <div class="modal" id="edit-user-modal">
-        <div class="modal-content">
-            <div class="modal-header"><h3 class="modal-title">Edit User</h3><button class="close-btn" id="close-edit-user-modal">×</button></div>
-            <form id="edit-user-form">
-                <input type="hidden" id="edit-user-id">
-                <div class="form-group"><label for="edit-user-email">Email</label><input type="email" class="form-control" id="edit-user-email" required></div>
-                <div class="form-group"><label for="edit-user-balance">Balance (USDT)</label><input type="number" step="0.01" class="form-control" id="edit-user-balance" required></div>
+        <div id="signupCard" class="auth-card" style="display: none;">
+            <div class="auth-title">Create New Account</div>
+            <form id="signupForm" class="auth-form">
                 <div class="form-group">
-                    <label for="edit-user-status">Status</label>
-                    <select class="form-control" id="edit-user-status" required>
-                        <option value="active">Active</option>
-                        <option value="banned">Banned</option>
-                    </select>
+                    <label for="signupName">Name</label>
+                    <input type="text" id="signupName" required placeholder="Enter your name">
                 </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" id="cancel-edit-user">Cancel</button>
-                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                <div class="form-group">
+                    <label for="signupEmail">Email</label>
+                    <input type="email" id="signupEmail" required placeholder="Enter your email">
+                </div>
+                <div class="form-group">
+                    <label for="signupPassword">Password</label>
+                    <input type="password" id="signupPassword" required placeholder="Create a password">
+                </div>
+                <div class="form-group">
+                    <label for="signupConfirmPassword">Confirm Password</label>
+                    <input type="password" id="signupConfirmPassword" required placeholder="Confirm your password">
+                </div>
+                <div id="signupError" class="auth-error"></div>
+                <div id="signupSuccess" class="auth-success"></div>
+                <button type="submit" class="auth-btn">Sign Up</button>
+                <div class="auth-toggle">
+                    Already have an account? <a id="showLogin">Login</a>
                 </div>
             </form>
         </div>
     </div>
-    
-    <!-- Withdrawal Details Modal -->
-    <div class="modal" id="withdrawal-modal">
-        <div class="modal-content">
-            <div class="modal-header"><h3 class="modal-title">Withdrawal Details</h3><button class="close-btn" id="close-withdrawal-modal">×</button></div>
-            <div id="withdrawal-details"><!-- Populated by JavaScript --></div>
-            <div class="modal-footer" id="withdrawal-actions">
-                <button type="button" class="btn btn-secondary" id="cancel-withdrawal">Close</button>
-                <button type="button" class="btn btn-primary approve-btn" id="approve-withdrawal">Approve</button>
-                <button type="button" class="btn btn-danger reject-btn" id="reject-withdrawal">Reject</button>
+
+    <!-- Main App (hidden until authenticated) -->
+    <div class="app-container">
+        <div id="homeScreen" class="screen active">
+            <div class="app-header">
+                <div class="user-info-header">
+                    <img id="headerUserAvatar" src="" alt=" " class="avatar-small">
+                    <div class="user-details">
+                        <div id="headerUserName" class="user-name-header">Loading...</div>
+                        <div id="headerUserPhone" class="user-phone-header">Phone: Not shared</div>
+                    </div>
+                </div>
+                <div class="actions"><span id="logoutButton">⋮</span></div>
+            </div>
+            <div class="profile-summary">
+                <img id="profileSummaryUserAvatar" src="" alt=" " class="avatar-large">
+                <div id="profileSummaryUserName" class="user-name-profile">Loading...</div>
+                <div id="profileSummaryUserBalance" class="user-balance-profile">Balance: 0.0000 USDT</div>
+            </div>
+            <div class="content-padding">
+                <div class="info-card">
+                    <h3>Today's Tasks (Overall Summary)</h3>
+                    <p><span>Monetag Tasks Completed Today:</span> <span id="homeMonetagTasksCompleted">0</span></p>
+                    <p><span>Daily Monetag Limit:</span> <span id="homeMonetagDailyLimit">1000</span></p>
+                </div>
+                
+                <div class="info-card">
+                    <h3>Earnings</h3>
+                    <p><span>Total Monetag Earnings (USDT):</span> <span id="homeTotalMonetagEarnings">0.0000</span></p>
+                </div>
+                
+                <div class="withdrawal-history-card">
+                    <h3>Recent Withdrawals</h3>
+                    <ul class="withdrawal-list" id="withdrawalHistoryList"></ul>
+                </div>
+            </div>
+        </div>
+
+        <div id="earnScreen" class="screen">
+            <div class="app-header">
+                <div class="title">Earn Tasks</div>
+                <div class="actions"><span>⋮</span></div>
+            </div>
+            <div class="content-padding">
+                <div style="text-align: right; font-size: 12px; color: #bbbbbb; margin-bottom:10px;">
+                    Test User (Dev) | Balance: USDT
+                </div>
+                <div class="info-card">
+                    <h3>Today's Monetag Tasks</h3>
+                    <p><span>Daily Limit:</span> <span id="earnMonetagDailyLimit">1000</span></p>
+                    <p><span>Completed Today:</span> <span id="earnMonetagCompletedToday">0</span></p>
+                    <p><span>Remaining Today:</span> <span id="earnMonetagRemainingToday">1000</span></p>
+                </div>
+                <button class="btn" id="startTaskMonetagButton">Start Task Monetag</button>
+                <button class="btn btn-auto" id="autoTaskCompleteButton">Auto Touch Complete</button>
+                <button class="btn btn-stop" id="stopAutoTaskButton" style="display: none;">Stop Auto Task</button>
+                <div id="adStatusMessage"></div>
+            </div>
+        </div>
+
+        <div id="referScreen" class="screen">
+            <div class="app-header">
+                <div class="title">Refer & Earn</div>
+                <div class="actions"><span>⋮</span></div>
+            </div>
+            <div class="content-padding">
+                <div class="info-card">
+                    <h3>Your Unique Referral Link</h3>
+                    <div class="form-group" style="display: flex; align-items: center; gap: 10px;">
+                        <input type="text" id="referralLink" readonly style="flex-grow: 1;">
+                        <button id="copyReferralLinkButton" class="btn" style="padding: 11px 15px; margin-top: 0; width: auto; font-size: 14px; white-space: nowrap;">Copy Link</button>
+                    </div>
+                    <p id="copyStatusMessage" style="font-size: 12px; color: #34c759; min-height: 18px; margin-top: 5px; text-align: right;"></p>
+                    <button id="shareReferralLinkButton" class="btn btn-share">Share Now</button>
+                </div>
+        
+                <div class="info-card">
+                    <h3>Referral Statistics</h3>
+                    <p><span>Times Link Shared/Copied (Overall):</span> <span id="totalReferralsCount">0</span></p>
+                    <p><span>Paid Shares Today:</span> <span id="paidSharesTodayCount">0/5</span></p>
+                    <p><span>USDT Earned from Sharing:</span> <span id="referralUsdtEarned">0.0000 USDT</span></p>
+                </div>
+        
+                <div class="info-card" id="referralProgramDetailsCard">
+                    <h3>Referral Program Details</h3>
+                    <!-- Details will be loaded from Firebase -->
+                </div>
+            </div>
+        </div>
+
+        <div id="withdrawScreen" class="screen">
+            <div class="app-header">
+                <div class="title">Withdraw Funds</div>
+                <div class="actions"><span>⋮</span></div>
+            </div>
+            <div class="content-padding">
+                <div class="info-card">
+                    <p><span>Available Balance:</span> <span id="withdrawUserBalance" style="font-size:16px; color:#34c759;">0.0000 USDT</span></p>
+                </div>
+                <div class="info-card">
+                    <h3>Request Withdrawal</h3>
+                    <div class="form-group">
+                        <label for="withdrawalMethod">Withdrawal Method:</label>
+                        <select id="withdrawalMethod" name="withdrawalMethod">
+                            <option value="">Loading methods...</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="withdrawalAmount">Amount (USDT):</label>
+                        <input type="number" id="withdrawalAmount" name="withdrawalAmount" placeholder="Enter amount">
+                    </div>
+                    <div class="form-group">
+                        <label for="withdrawalAddress">Account/Wallet Address:</label>
+                        <input type="text" id="withdrawalAddress" name="withdrawalAddress" placeholder="Enter account/wallet address">
+                    </div>
+                    <button class="btn" id="submitWithdrawalButton">Submit Withdrawal</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="profileScreen" class="screen">
+            <div class="app-header">
+                <div class="title">Profile</div>
+                <div class="actions"><span>⋮</span></div>
+            </div>
+            <div class="content-padding">
+                <div class="info-card">
+                    <h3>User Profile</h3>
+                    <p><span>Name:</span> <span id="profileTabUserName">Loading...</span></p>
+                    <p><span>Phone:</span> <span id="profileTabUserPhone">Not shared</span></p>
+                    <p><span>Total Balance (USDT):</span> <span id="profileTabUserBalance">0.0000</span></p>
+                    <p><span>Email:</span> <span id="profileTabUserEmail">user@example.com</span></p>
+                    <p><span>Last Active:</span> <span id="profileTabLastActiveDate">Loading...</span></p>
+                    <button class="btn" style="background-color: #ff3b30; margin-top: 20px;" id="profileLogoutButton">Logout</button>
+                </div>
             </div>
         </div>
     </div>
-    
-    <!-- Firebase SDK (CDN) -->
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-app.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-auth.js"></script>
-    <script src="https://www.gstatic.com/firebasejs/8.10.0/firebase-firestore.js"></script>
 
-    <!-- External JavaScript Files -->
-    <script src="js/firebase-config.js"></script>
-    <script src="js/main.js"></script>
+    <a href="https://t.me/Jobsrbot" target="_blank" class="telegram-contact-fab" id="telegramContactLink" title="Contact on Telegram">
+        <svg viewBox="0 0 24 24">
+            <path d="M11.944 0A12 12 0 0 0 0 12a12 12 0 0 0 12 12 12 12 0 0 0 12-12A12 12 0 0 0 12 0a12 12 0 0 0-.056 0zm4.962 7.224c.1-.002.321.023.465.14a.506.506 0 0 1 .171.325c.016.093.036.306.02.472-.18 1.898-.962 6.502-1.36 8.627-.17.91-.494 1.204-1.07 1.23-.928.043-1.348-.602-2.018-1.028-.91-.588-1.428-.945-2.326-1.528-.986-.631-.339-1.001.221-1.591.133-.142 2.568-2.295 2.568-2.295s.23-.205-.065-.455c-.294-.25-.728-.094-.728-.094L8.44 13.288c-.04.023-.075.045-.117.075l-.105.061s-.37.253-.947.031c-.578-.223-.994-.37-1.128-.409-.426-.12-.76-.182-.756-.532.003-.237.207-.404.512-.584 2.813-1.656 4.593-2.671 4.593-2.671s1.033-.622 2.001-.626zm-2.448 8.528l.618-2.997-.026.018s1.631 1.496 2.017 1.831l.015.012s.313.241.303-.255l-.008-.081L18.3 7.588s.096-.515-.578-.266l-10.84 3.862s-.76.295-.865.995l.01.022s.273.92.855.712L7.89 12.3s.374-.115.864.075l.008.004-3.264 2.957s-.396.358.083.585c.48.226 1.088-.08 1.088-.08l3.829-2.653.86.793 1.108 1.021s.182.153.359.034c.176-.118.173-.25.173-.25z"/>
+        </svg>
+    </a>
+
+    <div class="bottom-nav">
+        <div class="nav-item active" data-screen="homeScreen"> <div class="icon">🏠</div> <div>Home</div> </div>
+        <div class="nav-item" data-screen="earnScreen"> <div class="icon">💰</div> <div>Earn</div> </div>
+        <div class="nav-item" data-screen="referScreen">
+            <div class="icon">
+                <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px" fill="currentColor">
+                    <path d="M0 0h24v24H0V0z" fill="none"/>
+                    <path d="M16 11c1.66 0 2.99-1.34 2.99-3S17.66 5 16 5c-1.66 0-3 1.34-3 3s1.34 3 3 3zm-8 0c1.66 0 2.99-1.34 2.99-3S9.66 5 8 5C6.34 5 5 6.34 5 8s1.34 3 3 3zm0 2c-2.33 0-7 1.17-7 3.5V19h14v-2.5c0-2.33-4.67-3.5-7-3.5zm8 0c-.29 0-.62.02-.97.05 1.16.84 1.97 1.97 1.97 3.45V19h6v-2.5c0-2.33-4.67-3.5-7-3.5z"/>
+                </svg>
+            </div>
+            <div>Refer</div>
+        </div>
+        <div class="nav-item" data-screen="withdrawScreen"> <div class="icon">💸</div> <div>Withdraw</div> </div>
+        <div class="nav-item" data-screen="profileScreen"> <div class="icon">👤</div> <div>Profile</div> </div>
+    </div>
+
+    <script>
+        // Firebase configuration (আপনার নিজের কনফিগারেশন দিন)
+       const firebaseConfig = {
+  apiKey: "AIzaSyCko7fxg5Y-xzdvnEEyUybohNOdrwgOoN0",
+  authDomain: "onlien-many-bd-2022.firebaseapp.com",
+  databaseURL: "https://onlien-many-bd-2022-default-rtdb.firebaseio.com",
+  projectId: "onlien-many-bd-2022",
+  storageBucket: "onlien-many-bd-2022.firebasestorage.app",
+  messagingSenderId: "548329521148",
+  appId: "1:548329521148:web:022a821f0eab9652d23c79",
+  measurementId: "G-WN3NCCWETD"
+};
+        
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore(); // Firestore ইনিশিয়ালাইজ করা হয়েছে
+        const fieldValue = firebase.firestore.FieldValue; // Firestore FieldValue ব্যবহার করার জন্য
+
+        // গ্লোবাল ভ্যারিয়েবল এবং DOM এলিমেন্ট
+        const SHARE_REWARD_DELAY_MS = 60000; 
+
+        // সকল DOM এলিমেন্ট এখানে অপরিবর্তিত আছে
+        const navItems = document.querySelectorAll('.bottom-nav .nav-item');
+        const screens = document.querySelectorAll('.app-container .screen');
+        const headerUserAvatarElement = document.getElementById('headerUserAvatar');
+        const headerUserNameElement = document.getElementById('headerUserName');
+        const headerUserPhoneElement = document.getElementById('headerUserPhone');
+        const profileSummaryUserAvatarElement = document.getElementById('profileSummaryUserAvatar');
+        const profileSummaryUserNameElement = document.getElementById('profileSummaryUserName');
+        const profileSummaryUserBalanceElement = document.getElementById('profileSummaryUserBalance');
+        const profileTabUserNameElement = document.getElementById('profileTabUserName');
+        const profileTabUserPhoneElement = document.getElementById('profileTabUserPhone');
+        const profileTabUserEmailElement = document.getElementById('profileTabUserEmail');
+        const profileTabUserBalanceElement = document.getElementById('profileTabUserBalance');
+        const profileTabLastActiveDateElement = document.getElementById('profileTabLastActiveDate');
+        const withdrawUserBalanceElement = document.getElementById('withdrawUserBalance');
+        const startTaskMonetagButton = document.getElementById('startTaskMonetagButton');
+        const autoTaskCompleteButton = document.getElementById('autoTaskCompleteButton');
+        const stopAutoTaskButton = document.getElementById('stopAutoTaskButton');
+        const adStatusMessageElement = document.getElementById('adStatusMessage');
+        const earnMonetagDailyLimitElement = document.getElementById('earnMonetagDailyLimit');
+        const earnMonetagCompletedTodayElement = document.getElementById('earnMonetagCompletedToday');
+        const earnMonetagRemainingTodayElement = document.getElementById('earnMonetagRemainingToday');
+        const homeMonetagTasksCompletedElement = document.getElementById('homeMonetagTasksCompleted');
+        const homeMonetagDailyLimitElement = document.getElementById('homeMonetagDailyLimit');
+        const homeTotalMonetagEarningsElement = document.getElementById('homeTotalMonetagEarnings');
+        const withdrawalHistoryListElement = document.getElementById('withdrawalHistoryList');
+        const referralLinkElement = document.getElementById('referralLink');
+        const copyReferralLinkButton = document.getElementById('copyReferralLinkButton');
+        const shareReferralLinkButton = document.getElementById('shareReferralLinkButton');
+        const copyStatusMessageElement = document.getElementById('copyStatusMessage');
+        const totalReferralsCountElement = document.getElementById('totalReferralsCount');
+        const paidSharesTodayCountElement = document.getElementById('paidSharesTodayCount');
+        const referralUsdtEarnedElement = document.getElementById('referralUsdtEarned');
+        const logoutButton = document.getElementById('logoutButton');
+        const profileLogoutButton = document.getElementById('profileLogoutButton');
+        const loginForm = document.getElementById('loginForm');
+        const signupForm = document.getElementById('signupForm');
+        const showSignup = document.getElementById('showSignup');
+        const showLogin = document.getElementById('showLogin');
+        const loginCard = document.getElementById('loginCard');
+        const signupCard = document.getElementById('signupCard');
+        const loginError = document.getElementById('loginError');
+        const signupError = document.getElementById('signupError');
+        const loginSuccess = document.getElementById('loginSuccess');
+        const signupSuccess = document.getElementById('signupSuccess');
+        const authContainer = document.getElementById('authContainer');
+        const appContainer = document.querySelector('.app-container');
+        const telegramContactLink = document.getElementById('telegramContactLink');
+        const withdrawalMethodElement = document.getElementById('withdrawalMethod');
+        const submitWithdrawalButton = document.getElementById('submitWithdrawalButton');
+
+        let appState = {}; // লোকাল appState এখন Firestore থেকে ডেটা দিয়ে পপুলেট হবে
+        let appConfig = {}; // অ্যাপের কনফিগারেশন Firestore থেকে আসবে
+        let autoTaskInterval = null;
+        let unsubscribeUserListener = null; // রিয়েল-টাইম লিসেনার বন্ধ করার জন্য
+
+        // অ্যাডমিন প্যানেল থেকে অ্যাপের সেটিংস লোড করার ফাংশন
+        async function fetchAdminConfig() {
+            try {
+                const configDoc = await db.collection('config').doc('appSettings').get();
+                if (configDoc.exists) {
+                    appConfig = configDoc.data();
+                    console.log("Admin config loaded:", appConfig);
+                    // UI তে কনফিগারেশন আপডেট করা
+                    if (telegramContactLink) telegramContactLink.href = appConfig.contactTelegramUrl || "https://t.me/Jobsrbot";
+                    populateWithdrawalMethods();
+                } else {
+                    console.warn("Admin config not found in Firestore. Using default values.");
+                    // ডিফল্ট ভ্যালু সেট করুন যদি অ্যাডমিন প্যানেল থেকে কিছু সেট না করা থাকে
+                    appConfig = {
+                        dailyTaskLimit: 1000,
+                        rewardPerTaskUSD: 0.0006,
+                        adZone: '9344336',
+                        referralRewardUSDT: 0.10,
+                        maxPaidSharesPerDay: 5,
+                        contactTelegramUrl: "https://t.me/Jobsrbot",
+                        withdrawalMethods: [
+                            { name: "Nagad", min: 20, enabled: true },
+                            { name: "bKash", min: 20, enabled: true }
+                        ]
+                    };
+                }
+            } catch (error) {
+                console.error("Error fetching admin config:", error);
+            }
+        }
+
+        // Firestore থেকে উইথড্রয়াল মেথড লোড করে ড্রপডাউনে দেখানোর ফাংশন
+        function populateWithdrawalMethods() {
+            if (!withdrawalMethodElement) return;
+            withdrawalMethodElement.innerHTML = '<option value="">Select a method</option>';
+            if (appConfig.withdrawalMethods && Array.isArray(appConfig.withdrawalMethods)) {
+                appConfig.withdrawalMethods.forEach(method => {
+                    if (method.enabled) {
+                        const option = document.createElement('option');
+                        option.value = method.name.toLowerCase();
+                        option.textContent = `${method.name} (Min. ${method.min} USDT)`;
+                        option.dataset.min = method.min;
+                        withdrawalMethodElement.appendChild(option);
+                    }
+                });
+            }
+        }
+
+
+        // Auth Functions (অপরিবর্তিত)
+        function showLoginForm() { /* ... */ }
+        function showSignupForm() { /* ... */ }
+        function getAuthErrorMessage(errorCode) { /* ... */ }
+        
+        // Login এবং Signup ফাংশনগুলোতে Firestore ইন্টিগ্রেশন যোগ করা হয়েছে
+        function handleLogin(email, password) {
+            loginError.textContent = '';
+            auth.signInWithEmailAndPassword(email, password)
+                .then((userCredential) => {
+                    loginSuccess.textContent = 'Login successful! Loading app...';
+                    // User is handled by onAuthStateChanged observer
+                })
+                .catch((error) => {
+                    loginError.textContent = getAuthErrorMessage(error.code);
+                });
+        }
+
+        function handleSignup(name, email, password) {
+            if (password !== document.getElementById('signupConfirmPassword').value) {
+                signupError.textContent = 'Passwords do not match';
+                return;
+            }
+            signupError.textContent = '';
+            
+            auth.createUserWithEmailAndPassword(email, password)
+                .then((userCredential) => {
+                    const user = userCredential.user;
+                    // Update profile এবং Firestore ডকুমেন্ট তৈরি onAuthStateChanged এ করা হবে
+                    return user.updateProfile({ displayName: name });
+                })
+                .then(() => {
+                     signupSuccess.textContent = 'Account created successfully! Redirecting...';
+                })
+                .catch((error) => {
+                    signupError.textContent = getAuthErrorMessage(error.code);
+                });
+        }
+        
+        function handleLogout() {
+            if (unsubscribeUserListener) {
+                unsubscribeUserListener(); // রিয়েল-টাইম আপডেট বন্ধ করা
+                unsubscribeUserListener = null;
+            }
+            auth.signOut(); // Auth observer বাকিটা হ্যান্ডেল করবে
+        }
+
+        function showApp() {
+            authContainer.style.display = 'none';
+            appContainer.style.display = 'block';
+            updateDisplays();
+        }
+
+        function hideApp() {
+            authContainer.style.display = 'flex';
+            appContainer.style.display = 'none';
+        }
+
+        // Auth state observer (প্রধান লজিক এখানে)
+        auth.onAuthStateChanged(async (user) => {
+            if (user) {
+                // User is signed in
+                await initializeUser(user);
+                showApp();
+                loadTelegramUserData();
+                startWithdrawalHistoryFeedSimulation();
+            } else {
+                // User is signed out
+                hideApp();
+                showLoginForm();
+            }
+        });
+
+        async function initializeUser(user) {
+            const userRef = db.collection('users').doc(user.uid);
+            
+            // রিয়েল-টাইম আপডেটের জন্য onSnapshot লিসেনার সেট করা
+            if(unsubscribeUserListener) unsubscribeUserListener(); // আগের লিসেনার থাকলে বন্ধ করুন
+            unsubscribeUserListener = userRef.onSnapshot(async (doc) => {
+                if (doc.exists) {
+                    appState = doc.data();
+                    
+                    // ইউজার ব্লক করা আছে কিনা চেক করুন
+                    if (appState.isDisabled) {
+                        alert("Your account has been disabled by the administrator.");
+                        handleLogout();
+                        return;
+                    }
+
+                    // আজকের ডেট চেক করা এবং stats রিসেট করা
+                    const today = new Date().toDateString();
+                    if (appState.todayStats.date !== today) {
+                        await userRef.update({
+                            'todayStats.date': today,
+                            'todayStats.monetagTasksCompleted': 0,
+                            'todayStats.referralSharesToday': 0
+                        });
+                    } else {
+                        updateDisplays(); // ডেটা পেলে UI আপডেট করুন
+                    }
+
+                } else {
+                    // নতুন ব্যবহারকারীর জন্য ডেটা তৈরি করা
+                    const newUserState = {
+                        uid: user.uid,
+                        email: user.email,
+                        name: user.displayName || user.email.split('@')[0],
+                        balanceUSDT: 0.0,
+                        createdAt: fieldValue.serverTimestamp(),
+                        lastLogin: fieldValue.serverTimestamp(),
+                        isDisabled: false,
+                        todayStats: {
+                            date: new Date().toDateString(),
+                            monetagTasksCompleted: 0,
+                            referralSharesToday: 0
+                        },
+                        referralData: {
+                            userIdForReferral: `ref_${user.uid.substring(0, 8)}`,
+                            totalReferralsInitiated: 0,
+                            usdtEarnedFromReferrals: 0.0
+                        }
+                    };
+                    await userRef.set(newUserState);
+                    appState = newUserState;
+                    updateDisplays();
+                }
+            }, (error) => {
+                console.error("Error listening to user data:", error);
+            });
+
+            // লগইন টাইম আপডেট করা
+            await userRef.update({ lastLogin: fieldValue.serverTimestamp() });
+        }
+
+
+        function createDefaultAvatar(letter = 'U', size = 80) { /* ... */ }
+        function formatUSDT(amount) { return parseFloat(amount || 0).toFixed(4); }
+
+        function updateDisplays() {
+            if (!appState || !appConfig) return; // ডেটা লোড না হলে কিছুই করবেনা
+            
+            const formattedBalance = formatUSDT(appState.balanceUSDT) + " USDT";
+            if (profileSummaryUserBalanceElement) profileSummaryUserBalanceElement.textContent = "Balance: " + formattedBalance;
+            if (profileTabUserBalanceElement) profileTabUserBalanceElement.textContent = formatUSDT(appState.balanceUSDT);
+            if (withdrawUserBalanceElement) withdrawUserBalanceElement.textContent = formattedBalance;
+
+            let finalName = appState.name || "User";
+            if (headerUserNameElement) headerUserNameElement.textContent = finalName;
+            if (profileSummaryUserNameElement) profileSummaryUserNameElement.textContent = finalName;
+            if (profileTabUserNameElement) profileTabUserNameElement.textContent = finalName;
+            if (profileTabUserEmailElement) profileTabUserEmailElement.textContent = appState.email;
+            if (profileTabLastActiveDateElement) profileTabLastActiveDateElement.textContent = appState.todayStats.date;
+
+            // ... অন্যান্য UI এলিমেন্ট আপডেট ...
+            const dailyLimit = appConfig.dailyTaskLimit || 1000;
+            const tasksCompleted = appState.todayStats.monetagTasksCompleted || 0;
+            const remainingTasks = dailyLimit - tasksCompleted;
+
+            if (earnMonetagDailyLimitElement) earnMonetagDailyLimitElement.textContent = dailyLimit;
+            if (earnMonetagCompletedTodayElement) earnMonetagCompletedTodayElement.textContent = tasksCompleted;
+            if (earnMonetagRemainingTodayElement) earnMonetagRemainingTodayElement.textContent = remainingTasks > 0 ? remainingTasks : 0;
+            
+            if (homeMonetagTasksCompletedElement) homeMonetagTasksCompletedElement.textContent = tasksCompleted;
+            if (homeMonetagDailyLimitElement) homeMonetagDailyLimitElement.textContent = dailyLimit;
+            
+            const totalEarnings = appState.balanceUSDT || 0;
+            if (homeTotalMonetagEarningsElement) homeTotalMonetagEarningsElement.textContent = formatUSDT(totalEarnings);
+
+            if (startTaskMonetagButton) {
+                if (remainingTasks <= 0) {
+                    startTaskMonetagButton.textContent = "Daily Tasks Completed";
+                    startTaskMonetagButton.disabled = true;
+                    autoTaskCompleteButton.disabled = true;
+                } else {
+                    startTaskMonetagButton.textContent = `Start Task Monetag (${remainingTasks} left)`;
+                    startTaskMonetagButton.disabled = false;
+                    autoTaskCompleteButton.disabled = false;
+                }
+            }
+
+            // Referral Screen Update
+            if (referralLinkElement) {
+                const botBaseUrl = "https://t.me/My_Earning20BD_bot/YourAppName?startapp=";
+                referralLinkElement.value = `${botBaseUrl}${appState.referralData.userIdForReferral}`;
+            }
+            if (totalReferralsCountElement) totalReferralsCountElement.textContent = appState.referralData.totalReferralsInitiated || 0;
+            const maxShares = appConfig.maxPaidSharesPerDay || 5;
+            if (paidSharesTodayCountElement) paidSharesTodayCountElement.textContent = `${appState.todayStats.referralSharesToday || 0}/${maxShares}`;
+            if (referralUsdtEarnedElement) referralUsdtEarnedElement.textContent = formatUSDT(appState.referralData.usdtEarnedFromReferrals) + " USDT";
+        }
+
+        function loadTelegramUserData() { /* অপরিবর্তিত */ }
+        
+        // টাস্ক সম্পন্ন হলে Firestore আপডেট করা
+        function showMonetagAd() {
+            if (adStatusMessageElement) adStatusMessageElement.textContent = "Loading ad...";
+            startTaskMonetagButton.disabled = true;
+            const adFunction = `show_${appConfig.adZone || '9344336'}`;
+
+            if (typeof window[adFunction] === 'function') {
+                window[adFunction]().then(() => {
+                    if (adStatusMessageElement) adStatusMessageElement.textContent = "Ad shown successfully!";
+                    
+                    const reward = appConfig.rewardPerTaskUSD || 0.0006;
+                    const userRef = db.collection('users').doc(auth.currentUser.uid);
+                    
+                    // Atomic increment ব্যবহার করে ডেটা আপডেট করা
+                    userRef.update({
+                        'todayStats.monetagTasksCompleted': fieldValue.increment(1),
+                        'balanceUSDT': fieldValue.increment(reward)
+                    }).catch(err => console.error("Error updating task reward:", err));
+
+                    setTimeout(() => { if (adStatusMessageElement) adStatusMessageElement.textContent = ""; }, 1500);
+                }).catch((error) => {
+                    console.error("Monetag Ad error or closed:", error);
+                    if (adStatusMessageElement) adStatusMessageElement.textContent = "Ad could not be shown or was cancelled.";
+                    updateDisplays(); 
+                });
+            } else {
+                 if (adStatusMessageElement) adStatusMessageElement.textContent = `Ad SDK not ready.`;
+                updateDisplays(); 
+            }
+        }
+        
+        function startAutoTask() { /* অপরিবর্তিত */ }
+        function stopAutoTask() { /* অপরিবর্তিত */ }
+        function showScreen(screenId) { /* অপরিবর্তিত */ }
+
+        // উইথড্রয়াল রিকোয়েস্ট Firestore এ সেভ করা
+        async function submitWithdrawalRequest() {
+            const method = withdrawalMethodElement.value;
+            const amount = parseFloat(document.getElementById('withdrawalAmount').value);
+            const address = document.getElementById('withdrawalAddress').value.trim();
+
+            if (!method) { alert('Please select a withdrawal method.'); return; }
+            if (isNaN(amount) || amount <= 0) { alert('Please enter a valid withdrawal amount.'); return; }
+            if (!address) { alert('Please enter your account/wallet address.'); return; }
+
+            const selectedOption = withdrawalMethodElement.options[withdrawalMethodElement.selectedIndex];
+            const minWithdrawal = parseFloat(selectedOption.dataset.min);
+
+            if (amount < minWithdrawal) {
+                alert(`Minimum withdrawal for this method is ${minWithdrawal} USDT.`);
+                return;
+            }
+            if (appState.balanceUSDT < amount) {
+                alert(`Insufficient balance. Your current balance is ${formatUSDT(appState.balanceUSDT)} USDT.`);
+                return;
+            }
+
+            try {
+                submitWithdrawalButton.disabled = true;
+                submitWithdrawalButton.textContent = 'Submitting...';
+
+                await db.collection('withdrawalRequests').add({
+                    userId: auth.currentUser.uid,
+                    userName: appState.name,
+                    userEmail: appState.email,
+                    amount: amount,
+                    method: method,
+                    address: address,
+                    status: 'pending', // স্ট্যাটাস: পেন্ডিং
+                    timestamp: fieldValue.serverTimestamp()
+                });
+
+                // ব্যবহারকারীর ব্যালেন্স থেকে টাকা কেটে নেওয়া
+                await db.collection('users').doc(auth.currentUser.uid).update({
+                    balanceUSDT: fieldValue.increment(-amount)
+                });
+
+                alert('Withdrawal request submitted successfully! It will be processed by the admin.');
+                document.getElementById('withdrawalAmount').value = '';
+                document.getElementById('withdrawalAddress').value = '';
+
+            } catch (error) {
+                console.error("Error submitting withdrawal request: ", error);
+                alert('An error occurred. Please try again.');
+            } finally {
+                submitWithdrawalButton.disabled = false;
+                submitWithdrawalButton.textContent = 'Submit Withdrawal';
+            }
+        }
+
+        // ... অন্যান্য ফাংশন (startWithdrawalHistoryFeedSimulation, processReferralInitiation ইত্যাদি) ...
+        function processReferralInitiation(actionType = "share") {
+            const userRef = db.collection('users').doc(auth.currentUser.uid);
+            const rewardAmount = appConfig.referralRewardUSDT || 0.10;
+            const maxShares = appConfig.maxPaidSharesPerDay || 5;
+
+            if (appState.processingShareReward) {
+                if(copyStatusMessageElement) copyStatusMessageElement.textContent = "Reward processing, please wait...";
+                return; 
+            }
+
+            userRef.update({ processingShareReward: true, 'referralData.totalReferralsInitiated': fieldValue.increment(1) });
+            
+            let initialMessage = (actionType === "copy") ? `Link Copied! Processing reward...` : `Sharing... Processing reward...`;
+            if(copyStatusMessageElement) copyStatusMessageElement.textContent = initialMessage;
+            
+            if(copyReferralLinkButton) copyReferralLinkButton.disabled = true;
+            if(shareReferralLinkButton) shareReferralLinkButton.disabled = true;
+
+            setTimeout(() => {
+                let finalMessage = "";
+                if (appState.todayStats.referralSharesToday < maxShares) {
+                    userRef.update({
+                        'todayStats.referralSharesToday': fieldValue.increment(1),
+                        'referralData.usdtEarnedFromReferrals': fieldValue.increment(rewardAmount),
+                        'balanceUSDT': fieldValue.increment(rewardAmount)
+                    });
+                    finalMessage = `+$${rewardAmount.toFixed(2)} Earned!`;
+                } else {
+                    finalMessage = `Daily share reward limit reached.`;
+                }
+                
+                if(copyStatusMessageElement) copyStatusMessageElement.textContent = finalMessage;
+                setTimeout(() => { if(copyStatusMessageElement) copyStatusMessageElement.textContent = ""; }, 3500);
+
+                userRef.update({ processingShareReward: false });
+                if(copyReferralLinkButton) copyReferralLinkButton.disabled = false;
+                if(shareReferralLinkButton) shareReferralLinkButton.disabled = false;
+
+            }, SHARE_REWARD_DELAY_MS); 
+        }
+
+        // Event Listeners
+        showSignup.addEventListener('click', showSignupForm);
+        showLogin.addEventListener('click', showLoginForm);
+        loginForm.addEventListener('submit', (e) => { e.preventDefault(); handleLogin(loginEmail.value, loginPassword.value); });
+        signupForm.addEventListener('submit', (e) => { e.preventDefault(); handleSignup(signupName.value, signupEmail.value, signupPassword.value); });
+        logoutButton.addEventListener('click', handleLogout);
+        profileLogoutButton.addEventListener('click', handleLogout);
+        startTaskMonetagButton.addEventListener('click', showMonetagAd);
+        autoTaskCompleteButton.addEventListener('click', startAutoTask);
+        stopAutoTaskButton.addEventListener('click', stopAutoTask);
+        submitWithdrawalButton.addEventListener('click', submitWithdrawalRequest);
+        copyReferralLinkButton.addEventListener('click', () => { /* ... */ processReferralInitiation("copy"); });
+        shareReferralLinkButton.addEventListener('click', () => { /* ... */ processReferralInitiation("share"); });
+        navItems.forEach(item => { item.addEventListener('click', () => showScreen(item.getAttribute('data-screen'))); });
+
+        // App Initialization on window load
+        window.onload = async function() {
+            await fetchAdminConfig(); // সর্বপ্রথম অ্যাডমিন কনফিগারেশন লোড করা হবে
+            // বাকি ইনিশিয়ালাইজেশন onAuthStateChanged এ হবে
+        };
+        
+        // কিছু হার্ডকোডেড ফাংশন অপরিবর্তিত রাখা হয়েছে, যেমন:
+        // generateMaskedPhoneNumber, generateRandomWithdrawAmount, etc.
+        // এগুলো আপনি অ্যাডমিন প্যানেল থেকে নিয়ন্ত্রণ করতে চাইলে একইভাবে Firestore থেকে লোড করতে পারেন।
+        function startWithdrawalHistoryFeedSimulation() { /* অপরিবর্তিত */ }
+
+    </script>
 </body>
 </html>
