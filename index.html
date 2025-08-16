@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Panel - Earning App (Updated Referral & Ad Count)</title>
+    <title>Admin Panel - Earning App (Updated Referral & Ad Count & SMS)</title>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <style>
@@ -163,6 +163,11 @@
             color: white;
             margin-left: 8px;
         }
+        .btn-delete { /* New style for Delete SMS button */
+            background: var(--danger);
+            color: white;
+            margin-left: 8px;
+        }
         .btn:hover {
             opacity: 0.9;
             transform: translateY(-2px);
@@ -208,6 +213,44 @@
             color: #ab47bc; /* Purple text */
         }
         /* --- End New Styles --- */
+        /* --- New Styles for SMS Tab --- */
+        #sms-message-input {
+            width: 100%;
+            padding: 12px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            background: #2a2a2a;
+            color: white;
+            font-size: 16px;
+            margin-bottom: 15px;
+            box-sizing: border-box;
+        }
+        #current-message-display {
+            background: #2a2a2a;
+            padding: 15px;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            min-height: 60px;
+            font-style: italic;
+            color: #aaa;
+        }
+        #current-message-display.has-content {
+             font-style: normal;
+             color: #f5f5f5;
+        }
+        #sms-status-message {
+            margin-top: 10px;
+            font-size: 14px;
+            text-align: center;
+            min-height: 20px;
+        }
+        #sms-status-message.success {
+            color: var(--success);
+        }
+        #sms-status-message.error {
+            color: var(--danger);
+        }
+        /* --- End New Styles --- */
         @media (max-width: 768px) {
             .search-box {
                 width: 100%;
@@ -232,6 +275,9 @@
                 <button class="tab-btn active" data-tab="dashboard">📊 Dashboard</button>
                 <button class="tab-btn" data-tab="users">👥 Users</button>
                 <button class="tab-btn" data-tab="withdrawals">💸 Withdrawals</button>
+                 <!-- --- New SMS Tab Button --- -->
+                <button class="tab-btn" data-tab="sms">✉️ SMS</button>
+                 <!-- --- End New Button --- -->
             </div>
         </header>
         <!-- Dashboard Tab -->
@@ -323,6 +369,28 @@
                 </div>
             </div>
         </div>
+         <!-- --- New SMS Tab --- -->
+        <div id="sms" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <h2>✉️ Send SMS to Users</h2>
+                </div>
+                <div class="form-group">
+                    <label for="sms-message-input">Enter your message:</label>
+                    <textarea id="sms-message-input" rows="4" placeholder="Type your message here..."></textarea>
+                    <button id="send-sms-btn" class="btn" style="background-color: var(--success); width: 100%;">Send SMS</button>
+                    <div id="sms-status-message"></div>
+                </div>
+            </div>
+            <div class="card">
+                <div class="card-header">
+                    <h2>Current Message</h2>
+                     <button id="delete-sms-btn" class="btn btn-delete">Delete Message</button>
+                </div>
+                <div id="current-message-display">No message set.</div>
+            </div>
+        </div>
+        <!-- --- End New Tab --- -->
     </div>
     <script>
         // Firebase Config (Same as user app)
@@ -338,6 +406,9 @@
         // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
+        // --- New Reference for Admin Message --- //
+        const adminMessageRef = database.ref('adminMessage');
+        // --- End New Reference --- //
         // Tab Switching
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.addEventListener('click', () => {
@@ -348,6 +419,8 @@
                 if (btn.dataset.tab === 'users') loadUsers();
                 if (btn.dataset.tab === 'withdrawals') loadWithdrawals();
                 if (btn.dataset.tab === 'dashboard') loadDashboardStats();
+                // --- Load SMS content when SMS tab is activated --- //
+                if (btn.dataset.tab === 'sms') loadCurrentSMS();
             });
         });
         // Search Functionality
@@ -577,12 +650,112 @@
                 alert(`Error ${action}ing withdrawal: ${err.message}`);
             });
         }
+         // --- New Functions for SMS Tab --- //
+        function loadCurrentSMS() {
+            const displayElement = document.getElementById('current-message-display');
+            const statusElement = document.getElementById('sms-status-message');
+            adminMessageRef.once('value').then(snapshot => {
+                const messageData = snapshot.val();
+                if (displayElement) {
+                    if (messageData && messageData.text) {
+                        displayElement.textContent = messageData.text;
+                        displayElement.classList.add('has-content');
+                    } else {
+                        displayElement.textContent = "No message set.";
+                        displayElement.classList.remove('has-content');
+                    }
+                }
+            }).catch(err => {
+                console.error("Error loading current SMS:", err);
+                if (statusElement) {
+                    statusElement.textContent = "Error loading message.";
+                    statusElement.className = "error";
+                     setTimeout(() => { statusElement.textContent = ""; statusElement.className = ""; }, 3000);
+                }
+            });
+        }
+
+        function sendSMS() {
+             const inputElement = document.getElementById('sms-message-input');
+             const statusElement = document.getElementById('sms-status-message');
+             const messageText = inputElement?.value.trim();
+
+             if (!messageText) {
+                 if (statusElement) {
+                     statusElement.textContent = "Please enter a message.";
+                     statusElement.className = "error";
+                      setTimeout(() => { statusElement.textContent = ""; statusElement.className = ""; }, 3000);
+                 }
+                 return;
+             }
+
+             adminMessageRef.set({ text: messageText, timestamp: new Date().toISOString() })
+                .then(() => {
+                    console.log("SMS sent successfully to Firebase.");
+                    if (statusElement) {
+                        statusElement.textContent = "Message sent successfully!";
+                        statusElement.className = "success";
+                    }
+                    if (inputElement) inputElement.value = ''; // Clear input
+                    loadCurrentSMS(); // Refresh display
+                     setTimeout(() => {
+                        if (statusElement) {
+                            statusElement.textContent = "";
+                            statusElement.className = "";
+                        }
+                    }, 3000);
+                })
+                .catch(err => {
+                    console.error("Error sending SMS:", err);
+                    if (statusElement) {
+                        statusElement.textContent = "Error sending message: " + err.message;
+                        statusElement.className = "error";
+                         setTimeout(() => { statusElement.textContent = ""; statusElement.className = ""; }, 5000);
+                    }
+                });
+        }
+
+        function deleteSMS() {
+            const statusElement = document.getElementById('sms-status-message');
+            if (!confirm("Are you sure you want to delete the current message?")) {
+                return; // User cancelled
+            }
+            adminMessageRef.remove()
+                .then(() => {
+                    console.log("SMS deleted successfully from Firebase.");
+                    if (statusElement) {
+                        statusElement.textContent = "Message deleted successfully!";
+                        statusElement.className = "success";
+                    }
+                    loadCurrentSMS(); // Refresh display
+                     setTimeout(() => {
+                        if (statusElement) {
+                            statusElement.textContent = "";
+                            statusElement.className = "";
+                        }
+                    }, 3000);
+                })
+                .catch(err => {
+                    console.error("Error deleting SMS:", err);
+                    if (statusElement) {
+                        statusElement.textContent = "Error deleting message: " + err.message;
+                        statusElement.className = "error";
+                         setTimeout(() => { statusElement.textContent = ""; statusElement.className = ""; }, 5000);
+                    }
+                });
+        }
+
+        // Attach event listeners for SMS buttons
+        document.getElementById('send-sms-btn')?.addEventListener('click', sendSMS);
+        document.getElementById('delete-sms-btn')?.addEventListener('click', deleteSMS);
+        // --- End New Functions --- //
         // Initialize
         window.onload = function() {
             loadDashboardStats();
             // Load withdrawals on initial load or when tab is activated
             // You might want to add an event listener for the tab switch as well
              loadWithdrawals();
+             // Load initial SMS state if needed elsewhere, but it's loaded on tab click
         };
     </script>
 </body>
