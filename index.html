@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Panel - Earning App</title>
+    <title>Admin Panel - Earning App (Updated Referral & Ad Count)</title>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <style>
@@ -196,6 +196,18 @@
             color: #777;
             font-style: italic;
         }
+        /* --- New Styles for Ad Views Card --- */
+        #ad-views-card {
+             background: rgba(106, 27, 154, 0.15); /* Purple background */
+             border: 1px solid rgba(106, 27, 154, 0.3);
+        }
+        #ad-views-card h3 {
+            color: #ce93d8; /* Light purple text */
+        }
+        #ad-views-card .value {
+            color: #ab47bc; /* Purple text */
+        }
+        /* --- End New Styles --- */
         @media (max-width: 768px) {
             .search-box {
                 width: 100%;
@@ -233,13 +245,19 @@
                     <h3>Total Earnings</h3>
                     <div class="value" id="total-earnings">0.0000 USDT</div>
                 </div>
+                 <!-- --- New Card for Total Ad Views --- -->
+                <div class="stat-card" id="ad-views-card">
+                    <h3>Total Ad Views</h3>
+                    <div class="value" id="total-ad-views">0</div>
+                </div>
+                <!-- --- End New Card --- -->
                 <div class="stat-card">
+                    <h3>Successful Referrals</h3> <!-- Updated Title -->
+                    <div class="value" id="total-referrals">0</div>
+                </div>
+                 <div class="stat-card">
                     <h3>Pending Withdrawals</h3>
                     <div class="value" id="pending-withdrawals">0</div>
-                </div>
-                <div class="stat-card">
-                    <h3>Total Referrals</h3>
-                    <div class="value" id="total-referrals">0</div>
                 </div>
             </div>
             <div class="card">
@@ -265,7 +283,7 @@
                                 <th>Phone</th>
                                 <th>Balance</th>
                                 <th>Tasks</th>
-                                <th>Referrals</th>
+                                <th>Referrals</th> <!-- This column name is fine, shows successful referrals -->
                                 <th>Status</th>
                                 <th>Actions</th>
                             </tr>
@@ -352,24 +370,51 @@
         function loadDashboardStats() {
             database.ref('users/').once('value').then(snapshot => {
                 const data = snapshot.val();
-                if (!data) return;
+                if (!data) {
+                    // Reset stats if no data
+                    document.getElementById('total-users').textContent = '0';
+                    document.getElementById('total-earnings').textContent = '0.0000 USDT';
+                    document.getElementById('total-referrals').textContent = '0';
+                    document.getElementById('pending-withdrawals').textContent = '0';
+                    document.getElementById('total-ad-views').textContent = '0'; // Reset new stat
+                    return;
+                }
                 const users = Object.values(data);
                 let totalEarnings = 0;
-                let totalReferrals = 0;
+                // let totalReferrals = 0; // Old way
+                let totalSuccessfulReferrals = 0; // New way
                 let pendingWithdrawals = 0;
+                let totalAdViews = 0; // New stat
+
                 users.forEach(user => {
                     totalEarnings += parseFloat(user.userUSDTBalance || 0);
-                    totalReferrals += parseInt(user.referralData?.totalReferralsInitiated || 0);
-                    // Count pending withdrawals
-                    // This requires fetching withdrawals node, which might be heavy.
-                    // For simplicity, we'll just show 0 or fetch if needed.
-                    // A better approach is to maintain a counter in Firebase.
+                    // totalReferrals += parseInt(user.referralData?.totalReferralsInitiated || 0); // Old way
+                    totalSuccessfulReferrals += parseInt(user.referralData?.successfulReferrals || 0); // New way
+                    totalAdViews += parseInt(user.todayStats?.monetagTasksCompleted || 0); // Aggregate ad views
+                    // Count pending withdrawals (simple count for now)
+                     if (user.withdrawals) { // Assuming withdrawals are stored under user node
+                        Object.values(user.withdrawals).forEach(request => {
+                            if (request.status === 'pending') pendingWithdrawals++;
+                        });
+                     }
+                     // Alternative if withdrawals are in a separate top-level node:
+                     // This requires a separate fetch, which is less efficient for dashboard stats.
+                     // We'll stick with the user node approach for simplicity here.
                 });
                 document.getElementById('total-users').textContent = users.length;
                 document.getElementById('total-earnings').textContent = totalEarnings.toFixed(4) + ' USDT';
-                document.getElementById('total-referrals').textContent = totalReferrals;
-                // Placeholder for pending withdrawals count
-                document.getElementById('pending-withdrawals').textContent = 'N/A';
+                // document.getElementById('total-referrals').textContent = totalReferrals; // Old way
+                document.getElementById('total-referrals').textContent = totalSuccessfulReferrals; // New way
+                document.getElementById('pending-withdrawals').textContent = pendingWithdrawals;
+                document.getElementById('total-ad-views').textContent = totalAdViews; // New stat
+            }).catch(err => {
+                 console.error("Error loading dashboard stats:", err);
+                 // Reset stats on error
+                 document.getElementById('total-users').textContent = 'Error';
+                 document.getElementById('total-earnings').textContent = 'Error';
+                 document.getElementById('total-referrals').textContent = 'Error';
+                 document.getElementById('pending-withdrawals').textContent = 'Error';
+                 document.getElementById('total-ad-views').textContent = 'Error'; // Reset new stat
             });
         }
         // Load Users
@@ -385,6 +430,8 @@
                 }
                 Object.entries(data).forEach(([userId, user]) => {
                     const isBlocked = user.isBlocked || false;
+                    // Display successful referrals in the user list
+                    const successfulReferrals = user.referralData?.successfulReferrals || 0;
                     const tr = document.createElement('tr');
                     tr.innerHTML = `
                         <td>${userId}</td>
@@ -392,7 +439,7 @@
                         <td>${user.telegramUser?.phoneNumber || 'Not shared'}</td>
                         <td>${parseFloat(user.userUSDTBalance || 0).toFixed(4)} USDT</td>
                         <td>${user.todayStats?.monetagTasksCompleted || 0}</td>
-                        <td>${user.referralData?.totalReferralsInitiated || 0}</td>
+                        <td>${successfulReferrals}</td> <!-- Show successful referrals -->
                         <td><span class="status ${isBlocked ? 'rejected' : 'approved'}">${isBlocked ? 'Blocked' : 'Active'}</span></td>
                         <td>
                             <button class="btn ${isBlocked ? 'btn-unblock' : 'btn-block'}"
@@ -524,6 +571,7 @@
             }).then(() => {
                 alert(`Withdrawal request ${action}d successfully!`);
                 loadWithdrawals(); // Refresh the list
+                loadDashboardStats(); // Refresh dashboard stats (e.g., pending count)
             }).catch(err => {
                 console.error(`Error ${action}ing withdrawal:`, err);
                 alert(`Error ${action}ing withdrawal: ${err.message}`);
