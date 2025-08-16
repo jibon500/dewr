@@ -1,3 +1,4 @@
+<!-- admin-panel.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -305,12 +306,19 @@
                     <h3>Pending Withdrawals</h3>
                     <div class="value" id="pending-withdrawals">0</div>
                 </div>
+                 <div class="stat-card">
+                    <h3>New Users (Today)</h3>
+                    <div class="value" id="new-users-today">0</div>
+                </div>
             </div>
             <div class="card">
                 <div class="card-header">
                     <h2>Recent Activity</h2>
                 </div>
-                <div class="no-data">No recent activity to display</div>
+                <div id="recent-activity-list">
+                    <!-- Recent activity items will be populated here -->
+                    <div class="no-data">No recent activity to display</div>
+                </div>
             </div>
         </div>
         <!-- Users Tab -->
@@ -439,6 +447,172 @@
                 row.style.display = text.includes(searchTerm) ? '' : 'none';
             });
         }
+        // --- New function to get start of today (midnight) ---
+        function getStartOfToday() {
+            const now = new Date();
+            return new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+        }
+        // --- New function to get start of yesterday ---
+        function getStartOfYesterday() {
+            const now = new Date();
+            return new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1).getTime();
+        }
+        // --- New function to get start of 7 days ago ---
+        function getStartOf7DaysAgo() {
+            const now = new Date();
+            return new Date(now.getFullYear(), now.getMonth(), now.getDate() - 6).getTime(); // 6 days ago to include today = 7 days total
+        }
+        // --- New function to format date for display ---
+        function formatDateForActivity(dateObj) {
+            const options = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
+            return dateObj.toLocaleDateString('en-US', options);
+        }
+        // --- New function to load and display recent activity ---
+        function loadRecentActivity() {
+            const activityContainer = document.getElementById('recent-activity-list');
+            if (!activityContainer) return;
+
+            activityContainer.innerHTML = '<div class="no-data">Loading recent activity...</div>';
+
+            // Get timestamps for filtering
+            const startOfToday = getStartOfToday();
+            const startOfYesterday = getStartOfYesterday();
+            const startOf7DaysAgo = getStartOf7DaysAgo();
+
+            // Load new users from today
+            const newUsersTodayRef = database.ref('users').orderByChild('lastSeen').startAt(startOfToday);
+            newUsersTodayRef.once('value').then(snapshot => {
+                const userData = snapshot.val();
+                const newUsersTodayList = [];
+
+                if (userData) {
+                    Object.entries(userData).forEach(([userId, user]) => {
+                        // Ensure lastSeen is a valid timestamp
+                        const userLastSeen = user.lastSeen ? new Date(user.lastSeen).getTime() : 0;
+                        if (userLastSeen >= startOfToday) {
+                            newUsersTodayList.push({
+                                type: 'user',
+                                id: userId,
+                                name: user.telegramUser?.name || 'Unknown',
+                                timestamp: user.lastSeen ? new Date(user.lastSeen) : new Date()
+                            });
+                        }
+                    });
+                }
+
+                // Load recent withdrawals (last 7 days)
+                const recentWithdrawalsRef = database.ref('withdrawals');
+                recentWithdrawalsRef.once('value').then(withdrawalSnapshot => {
+                    const withdrawalData = withdrawalSnapshot.val();
+                    const recentWithdrawalsList = [];
+
+                    if (withdrawalData) {
+                        // Iterate through users' withdrawals
+                        Object.entries(withdrawalData).forEach(([userId, userRequests]) => {
+                            Object.entries(userRequests).forEach(([requestId, requestData]) => {
+                                // Ensure timestamp is a valid timestamp
+                                const requestTimestamp = requestData.timestamp ? new Date(requestData.timestamp).getTime() : 0;
+                                if (requestTimestamp >= startOf7DaysAgo) {
+                                    recentWithdrawalsList.push({
+                                        type: 'withdrawal',
+                                        userId: userId,
+                                        requestId: requestId,
+                                        amount: requestData.amount,
+                                        status: requestData.status || 'pending',
+                                        timestamp: requestData.timestamp ? new Date(requestData.timestamp) : new Date()
+                                    });
+                                }
+                            });
+                        });
+                    }
+
+                    // Load recent successful referrals (last 7 days)
+                    // We'll assume a referral is "recent" if the referrer's data was updated recently.
+                    // A better approach would be to store referral timestamps, but we'll use lastSeen for now.
+                    const recentReferralsRef = database.ref('users').orderByChild('lastSeen').startAt(startOf7DaysAgo);
+                    recentReferralsRef.once('value').then(referralSnapshot => {
+                        const referralData = referralSnapshot.val();
+                        const recentReferralsList = [];
+
+                        if (referralData) {
+                            Object.entries(referralData).forEach(([userId, user]) => {
+                                const successfulReferrals = user.referralData?.successfulReferrals || 0;
+                                // We don't have a timestamp for individual referrals, so we just show the user if they have referrals
+                                // This is a limitation of the current data structure.
+                                // For a more accurate list, we'd need to store referral events with timestamps.
+                                if (successfulReferrals > 0) {
+                                    recentReferralsList.push({
+                                        type: 'referral',
+                                        userId: userId,
+                                        name: user.telegramUser?.name || 'Unknown',
+                                        count: successfulReferrals,
+                                        timestamp: user.lastSeen ? new Date(user.lastSeen) : new Date() // Use lastSeen as a proxy
+                                    });
+                                }
+                            });
+                        }
+
+                        // Combine all activities
+                        let allActivities = [
+                            ...newUsersTodayList,
+                            ...recentWithdrawalsList,
+                            ...recentReferralsList
+                        ];
+
+                        // Sort by timestamp descending (newest first)
+                        allActivities.sort((a, b) => b.timestamp - a.timestamp);
+
+                        // Clear container and populate
+                        activityContainer.innerHTML = '';
+
+                        if (allActivities.length === 0) {
+                            activityContainer.innerHTML = '<div class="no-data">No recent activity to display</div>';
+                            return;
+                        }
+
+                        // Create activity items
+                        allActivities.slice(0, 20).forEach(activity => { // Show last 20 activities
+                            const activityItem = document.createElement('div');
+                            activityItem.style.padding = '10px';
+                            activityItem.style.borderBottom = '1px solid var(--border)';
+                            activityItem.style.fontSize = '14px';
+
+                            let activityText = '';
+                            let activityTime = formatDateForActivity(activity.timestamp);
+
+                            if (activity.type === 'user') {
+                                activityText = `<strong>New User:</strong> ${activity.name} (ID: ${activity.id})`;
+                                activityItem.style.color = '#bbdefb'; // Light blue for new users
+                            } else if (activity.type === 'withdrawal') {
+                                const statusClass = activity.status === 'approved' ? 'approved' :
+                                                   activity.status === 'rejected' ? 'rejected' : 'pending';
+                                activityText = `<strong>Withdrawal:</strong> ${parseFloat(activity.amount).toFixed(4)} USDT by User ${activity.userId} [${activity.status}]`;
+                                activityItem.style.color = statusClass === 'approved' ? '#a5d6a7' : // Green for approved
+                                                          statusClass === 'rejected' ? '#ef9a9a' : // Red for rejected
+                                                                                       '#ffcc80'; // Orange for pending
+                            } else if (activity.type === 'referral') {
+                                activityText = `<strong>Referral:</strong> ${activity.name} (ID: ${activity.userId}) earned ${activity.count} referral(s)`;
+                                activityItem.style.color = '#ce93d8'; // Purple for referrals
+                            }
+
+                            activityItem.innerHTML = `${activityText} <span style="float: right; opacity: 0.8;">${activityTime}</span>`;
+                            activityContainer.appendChild(activityItem);
+                        });
+                    }).catch(err => {
+                        console.error("Error loading recent referrals for activity:", err);
+                        activityContainer.innerHTML = '<div class="no-data">Error loading recent activity.</div>';
+                    });
+
+                }).catch(err => {
+                    console.error("Error loading recent withdrawals for activity:", err);
+                    activityContainer.innerHTML = '<div class="no-data">Error loading recent activity.</div>';
+                });
+
+            }).catch(err => {
+                console.error("Error loading new users for activity:", err);
+                activityContainer.innerHTML = '<div class="no-data">Error loading recent activity.</div>';
+            });
+        }
         // Load Dashboard Stats
         function loadDashboardStats() {
             database.ref('users/').once('value').then(snapshot => {
@@ -450,6 +624,8 @@
                     document.getElementById('total-referrals').textContent = '0';
                     document.getElementById('pending-withdrawals').textContent = '0';
                     document.getElementById('total-ad-views').textContent = '0'; // Reset new stat
+                    document.getElementById('new-users-today').textContent = '0'; // Reset new stat
+                    loadRecentActivity(); // Load activity even if no users
                     return;
                 }
                 const users = Object.values(data);
@@ -458,12 +634,25 @@
                 let totalSuccessfulReferrals = 0; // New way
                 let pendingWithdrawals = 0;
                 let totalAdViews = 0; // New stat
+                let newUsersToday = 0; // New stat
+
+                // Get today's start timestamp
+                const startOfToday = getStartOfToday();
 
                 users.forEach(user => {
                     totalEarnings += parseFloat(user.userUSDTBalance || 0);
                     // totalReferrals += parseInt(user.referralData?.totalReferralsInitiated || 0); // Old way
                     totalSuccessfulReferrals += parseInt(user.referralData?.successfulReferrals || 0); // New way
                     totalAdViews += parseInt(user.todayStats?.monetagTasksCompleted || 0); // Aggregate ad views
+
+                    // Count new users today
+                    if (user.lastSeen) {
+                        const userLastSeenTimestamp = new Date(user.lastSeen).getTime();
+                        if (userLastSeenTimestamp >= startOfToday) {
+                            newUsersToday++;
+                        }
+                    }
+
                     // Count pending withdrawals (simple count for now)
                      if (user.withdrawals) { // Assuming withdrawals are stored under user node
                         Object.values(user.withdrawals).forEach(request => {
@@ -480,6 +669,10 @@
                 document.getElementById('total-referrals').textContent = totalSuccessfulReferrals; // New way
                 document.getElementById('pending-withdrawals').textContent = pendingWithdrawals;
                 document.getElementById('total-ad-views').textContent = totalAdViews; // New stat
+                document.getElementById('new-users-today').textContent = newUsersToday; // New stat
+
+                // Load recent activity after stats
+                loadRecentActivity();
             }).catch(err => {
                  console.error("Error loading dashboard stats:", err);
                  // Reset stats on error
@@ -488,6 +681,8 @@
                  document.getElementById('total-referrals').textContent = 'Error';
                  document.getElementById('pending-withdrawals').textContent = 'Error';
                  document.getElementById('total-ad-views').textContent = 'Error'; // Reset new stat
+                 document.getElementById('new-users-today').textContent = 'Error'; // Reset new stat
+                 document.getElementById('recent-activity-list').innerHTML = '<div class="no-data">Error loading recent activity.</div>';
             });
         }
         // Load Users
@@ -674,12 +869,10 @@
                 }
             });
         }
-
         function sendSMS() {
              const inputElement = document.getElementById('sms-message-input');
              const statusElement = document.getElementById('sms-status-message');
              const messageText = inputElement?.value.trim();
-
              if (!messageText) {
                  if (statusElement) {
                      statusElement.textContent = "Please enter a message.";
@@ -688,7 +881,6 @@
                  }
                  return;
              }
-
              adminMessageRef.set({ text: messageText, timestamp: new Date().toISOString() })
                 .then(() => {
                     console.log("SMS sent successfully to Firebase.");
@@ -714,7 +906,6 @@
                     }
                 });
         }
-
         function deleteSMS() {
             const statusElement = document.getElementById('sms-status-message');
             if (!confirm("Are you sure you want to delete the current message?")) {
@@ -744,7 +935,6 @@
                     }
                 });
         }
-
         // Attach event listeners for SMS buttons
         document.getElementById('send-sms-btn')?.addEventListener('click', sendSMS);
         document.getElementById('delete-sms-btn')?.addEventListener('click', deleteSMS);
