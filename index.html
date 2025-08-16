@@ -1,10 +1,9 @@
-<!-- admin-panel.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Panel - Earning App (Updated Referral & Ad Count & SMS)</title>
+    <title>Admin Panel - Earning App (Updated Withdrawal Processing)</title>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <style>
@@ -14,6 +13,7 @@
             --success: #43a047;
             --warning: #ef6c00;
             --danger: #e53935;
+            --processing: #ff9800;
             --dark: #121212;
             --darker: #0a0a0a;
             --card-bg: #1f1f1f;
@@ -136,6 +136,14 @@
             background: rgba(229, 57, 53, 0.2);
             color: #ef9a9a;
         }
+        .status.processing {
+            background: rgba(255, 152, 0, 0.2);
+            color: #ffcc80;
+        }
+        .status.success {
+            background: rgba(67, 160, 71, 0.4);
+            color: #a5d6a7;
+        }
         .btn {
             padding: 8px 15px;
             border: none;
@@ -162,13 +170,18 @@
             background: #6a1b9a;
             color: white;
         }
-        .btn-delete { /* New style for Delete SMS button */
+        .btn-delete {
             background: var(--danger);
             color: white;
         }
-        .btn-edit { /* New style for Edit button */
+        .btn-edit {
             background: var(--primary);
             color: white;
+        }
+        .btn-processing {
+            background: var(--processing);
+            color: white;
+            cursor: not-allowed;
         }
         .btn:hover {
             opacity: 0.9;
@@ -203,19 +216,16 @@
             color: #777;
             font-style: italic;
         }
-        /* --- New Styles for Ad Views Card --- */
         #ad-views-card {
-             background: rgba(106, 27, 154, 0.15); /* Purple background */
+             background: rgba(106, 27, 154, 0.15);
              border: 1px solid rgba(106, 27, 154, 0.3);
         }
         #ad-views-card h3 {
-            color: #ce93d8; /* Light purple text */
+            color: #ce93d8;
         }
         #ad-views-card .value {
-            color: #ab47bc; /* Purple text */
+            color: #ab47bc;
         }
-        /* --- End New Styles --- */
-        /* --- New Styles for SMS Tab --- */
         #sms-message-input {
             width: 100%;
             padding: 12px;
@@ -252,7 +262,6 @@
         #sms-status-message.error {
             color: var(--danger);
         }
-        /* --- New Styles for Edit Modal --- */
         .modal {
             display: none;
             position: fixed;
@@ -316,7 +325,6 @@
             gap: 10px;
             margin-top: 20px;
         }
-        /* --- End New Styles --- */
         @media (max-width: 768px) {
             .search-box {
                 width: 100%;
@@ -341,13 +349,9 @@
                 <button class="tab-btn active" data-tab="dashboard">📊 Dashboard</button>
                 <button class="tab-btn" data-tab="users">👥 Users</button>
                 <button class="tab-btn" data-tab="withdrawals">💸 Withdrawals</button>
-                <button class="tab-btn" data-tab="referrals">👥 Referrals</button> <!-- New Tab -->
-                 <!-- --- New SMS Tab Button --- -->
+                <button class="tab-btn" data-tab="referrals">👥 Referrals</button>
                 <button class="tab-btn" data-tab="sms">✉️ SMS</button>
-                 <!-- --- End New Button --- -->
-                 <!-- --- New Settings Tab Button --- -->
                 <button class="tab-btn" data-tab="settings">⚙️ Settings</button>
-                 <!-- --- End New Button --- -->
             </div>
         </header>
         <!-- Dashboard Tab -->
@@ -361,14 +365,12 @@
                     <h3>Total Earnings</h3>
                     <div class="value" id="total-earnings">0.0000 USDT</div>
                 </div>
-                 <!-- --- New Card for Total Ad Views --- -->
                 <div class="stat-card" id="ad-views-card">
                     <h3>Total Ad Views</h3>
                     <div class="value" id="total-ad-views">0</div>
                 </div>
-                <!-- --- End New Card --- -->
                 <div class="stat-card">
-                    <h3>Successful Referrals</h3> <!-- Updated Title -->
+                    <h3>Successful Referrals</h3>
                     <div class="value" id="total-referrals">0</div>
                 </div>
                  <div class="stat-card">
@@ -385,7 +387,6 @@
                     <h2>Recent Activity</h2>
                 </div>
                 <div id="recent-activity-list">
-                    <!-- Recent activity items will be populated here -->
                     <div class="no-data">No recent activity to display</div>
                 </div>
             </div>
@@ -406,7 +407,7 @@
                                 <th>Phone</th>
                                 <th>Balance</th>
                                 <th>Tasks</th>
-                                <th>Referrals</th> <!-- This column name is fine, shows successful referrals -->
+                                <th>Referrals</th>
                                 <th>Status</th>
                                 <th>Actions</th>
                             </tr>
@@ -446,7 +447,6 @@
                 </div>
             </div>
         </div>
-         <!-- --- New Referrals Tab --- -->
         <div id="referrals" class="tab-content">
             <div class="card">
                 <div class="card-header">
@@ -472,8 +472,6 @@
                 </div>
             </div>
         </div>
-        <!-- --- End New Tab --- -->
-         <!-- --- New SMS Tab --- -->
         <div id="sms" class="tab-content">
             <div class="card">
                 <div class="card-header">
@@ -494,8 +492,6 @@
                 <div id="current-message-display">No message set.</div>
             </div>
         </div>
-        <!-- --- End New Tab --- -->
-        <!-- --- New Settings Tab --- -->
         <div id="settings" class="tab-content">
             <div class="card">
                 <div class="card-header">
@@ -509,10 +505,8 @@
                 <div id="settings-status-message" style="margin-top: 15px; text-align: center; min-height: 20px;"></div>
             </div>
         </div>
-        <!-- --- End New Tab --- -->
     </div>
 
-    <!-- --- Edit User Modal --- -->
     <div id="editUserModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -533,10 +527,8 @@
             </div>
         </div>
     </div>
-    <!-- --- End Edit User Modal --- -->
 
     <script>
-        // Firebase Config (Same as user app)
         const firebaseConfig = {
             apiKey: "AIzaSyD3BGZ0MVLpbQbIpLUAnYvWNEIyk7Y6S0Q",
             authDomain: "earning-app-80258.firebaseapp.com",
@@ -546,18 +538,14 @@
             messagingSenderId: "25930019210",
             appId: "1:25930019210:web:6441562811d3e7e9631873"
         };
-        // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
-        // --- New Reference for Admin Message --- //
         const adminMessageRef = database.ref('adminMessage');
-        // --- New Reference for App Settings --- //
         const appSettingsRef = database.ref('appSettings');
-        // --- End New References --- //
 
-        let currentEditUserId = null; // To track which user is being edited
+        let currentEditUserId = null;
+        let withdrawalRequests = {};
 
-        // Tab Switching
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -566,23 +554,20 @@
                 document.getElementById(btn.dataset.tab).classList.add('active');
                 if (btn.dataset.tab === 'users') loadUsers();
                 if (btn.dataset.tab === 'withdrawals') loadWithdrawals();
-                if (btn.dataset.tab === 'referrals') loadReferrals(); // Load referrals
+                if (btn.dataset.tab === 'referrals') loadReferrals();
                 if (btn.dataset.tab === 'dashboard') loadDashboardStats();
-                // --- Load SMS content when SMS tab is activated --- //
                 if (btn.dataset.tab === 'sms') loadCurrentSMS();
-                // --- Load settings when Settings tab is activated --- //
                 if (btn.dataset.tab === 'settings') loadAppSettings();
             });
         });
 
-        // Search Functionality
         document.getElementById('user-search')?.addEventListener('input', function() {
             filterTable('users-tbody', this.value);
         });
         document.getElementById('withdrawal-search')?.addEventListener('input', function() {
             filterTable('withdrawals-tbody', this.value);
         });
-        document.getElementById('referral-search')?.addEventListener('input', function() { // New search
+        document.getElementById('referral-search')?.addEventListener('input', function() {
             filterTable('referrals-tbody', this.value);
         });
         function filterTable(tbodyId, searchTerm) {
@@ -595,29 +580,23 @@
             });
         }
 
-        // --- New function to get start of today (midnight) ---
         function getStartOfToday() {
             const now = new Date();
             return new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
         }
 
-        // --- New function to format date for display ---
         function formatDateForActivity(dateObj) {
             const options = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
             return dateObj.toLocaleDateString('en-US', options);
         }
 
-        // --- New function to load and display recent activity ---
         function loadRecentActivity() {
             const activityContainer = document.getElementById('recent-activity-list');
             if (!activityContainer) return;
 
             activityContainer.innerHTML = '<div class="no-data">Loading recent activity...</div>';
 
-            // Get timestamps for filtering
             const startOfToday = getStartOfToday();
-
-            // Load new users from today
             const newUsersTodayRef = database.ref('users').orderByChild('lastSeen').startAt(startOfToday);
             newUsersTodayRef.once('value').then(snapshot => {
                 const userData = snapshot.val();
@@ -637,7 +616,6 @@
                     });
                 }
 
-                // Load recent withdrawals (last 7 days)
                 const recentWithdrawalsRef = database.ref('withdrawals');
                 recentWithdrawalsRef.once('value').then(withdrawalSnapshot => {
                     const withdrawalData = withdrawalSnapshot.val();
@@ -647,7 +625,6 @@
                         Object.entries(withdrawalData).forEach(([userId, userRequests]) => {
                             Object.entries(userRequests).forEach(([requestId, requestData]) => {
                                 const requestTimestamp = requestData.timestamp ? new Date(requestData.timestamp).getTime() : 0;
-                                // Show last 24 hours of withdrawals in recent activity
                                 if (requestTimestamp >= startOfToday) {
                                     recentWithdrawalsList.push({
                                         type: 'withdrawal',
@@ -662,7 +639,6 @@
                         });
                     }
 
-                    // Load recent successful referrals (last 24 hours)
                     const recentReferralsRef = database.ref('referralBonuses');
                     recentReferralsRef.orderByChild('timestamp').startAt(new Date(startOfToday).toISOString()).once('value')
                         .then(referralSnapshot => {
@@ -681,17 +657,13 @@
                                 });
                             }
 
-                            // Combine all activities
                             let allActivities = [
                                 ...newUsersTodayList,
                                 ...recentWithdrawalsList,
                                 ...recentReferralsList
                             ];
 
-                            // Sort by timestamp descending (newest first)
                             allActivities.sort((a, b) => b.timestamp - a.timestamp);
-
-                            // Clear container and populate
                             activityContainer.innerHTML = '';
 
                             if (allActivities.length === 0) {
@@ -699,8 +671,7 @@
                                 return;
                             }
 
-                            // Create activity items
-                            allActivities.slice(0, 20).forEach(activity => { // Show last 20 activities
+                            allActivities.slice(0, 20).forEach(activity => {
                                 const activityItem = document.createElement('div');
                                 activityItem.style.padding = '10px';
                                 activityItem.style.borderBottom = '1px solid var(--border)';
@@ -711,17 +682,17 @@
 
                                 if (activity.type === 'user') {
                                     activityText = `<strong>New User:</strong> ${activity.name} (ID: ${activity.id})`;
-                                    activityItem.style.color = '#bbdefb'; // Light blue for new users
+                                    activityItem.style.color = '#bbdefb';
                                 } else if (activity.type === 'withdrawal') {
                                     const statusClass = activity.status === 'approved' ? 'approved' :
                                                        activity.status === 'rejected' ? 'rejected' : 'pending';
                                     activityText = `<strong>Withdrawal:</strong> ${parseFloat(activity.amount).toFixed(4)} USDT by User ${activity.userId} [${activity.status}]`;
-                                    activityItem.style.color = statusClass === 'approved' ? '#a5d6a7' : // Green for approved
-                                                              statusClass === 'rejected' ? '#ef9a9a' : // Red for rejected
-                                                                                           '#ffcc80'; // Orange for pending
+                                    activityItem.style.color = statusClass === 'approved' ? '#a5d6a7' : 
+                                                              statusClass === 'rejected' ? '#ef9a9a' : 
+                                                                                           '#ffcc80';
                                 } else if (activity.type === 'referral') {
                                     activityText = `<strong>Referral Bonus:</strong> ${parseFloat(activity.amount).toFixed(4)} USDT for User ${activity.referrerId} (Referee: ${activity.refereeId})`;
-                                    activityItem.style.color = '#ce93d8'; // Purple for referrals
+                                    activityItem.style.color = '#ce93d8';
                                 }
 
                                 activityItem.innerHTML = `${activityText} <span style="float: right; opacity: 0.8;">${activityTime}</span>`;
@@ -743,15 +714,10 @@
             });
         }
 
-        // Load Dashboard Stats
         function loadDashboardStats() {
-            // Load users
             const usersPromise = database.ref('users/').once('value');
-            // Load withdrawals
             const withdrawalsPromise = database.ref('withdrawals').once('value');
-            // Load referral bonuses
             const referralsPromise = database.ref('referralBonuses').once('value');
-            // Load app settings
             const settingsPromise = appSettingsRef.once('value');
 
             Promise.all([usersPromise, withdrawalsPromise, referralsPromise, settingsPromise])
@@ -761,7 +727,6 @@
                     const referralData = referralsSnapshot.val();
                     const settingsData = settingsSnapshot.val();
 
-                    // Reset stats
                     let totalUsers = 0;
                     let totalEarnings = 0;
                     let totalSuccessfulReferrals = 0;
@@ -815,7 +780,6 @@
                 });
         }
 
-        // Load Users
         function loadUsers() {
             const tbody = document.getElementById('users-tbody');
             tbody.innerHTML = '<tr><td colspan="8" class="no-data">Loading users...</td></tr>';
@@ -853,13 +817,12 @@
             });
         }
 
-        // Toggle User Block
         function toggleUserBlock(userId, isCurrentlyBlocked) {
             const newStatus = !isCurrentlyBlocked;
             database.ref(`users/${userId}/isBlocked`).set(newStatus)
                 .then(() => {
                     alert(`User ${newStatus ? 'blocked' : 'unblocked'} successfully!`);
-                    loadUsers(); // Refresh the user list
+                    loadUsers();
                 })
                 .catch(err => {
                     console.error("Error updating user status:", err);
@@ -867,7 +830,6 @@
                 });
         }
 
-        // --- New Functions for Edit User Modal --- //
         function openEditUserModal(userId, currentBalance) {
             currentEditUserId = userId;
             document.getElementById('edit-user-id').value = userId;
@@ -891,8 +853,8 @@
                 .then(() => {
                     alert('User balance updated successfully!');
                     closeEditUserModal();
-                    loadUsers(); // Refresh user list
-                    loadDashboardStats(); // Refresh dashboard
+                    loadUsers();
+                    loadDashboardStats();
                 })
                 .catch(err => {
                     console.error("Error updating user balance:", err);
@@ -900,20 +862,16 @@
                 });
         }
 
-        // Event listeners for Edit User Modal
         document.querySelector('#editUserModal .close-modal').addEventListener('click', closeEditUserModal);
         document.getElementById('cancel-edit-btn').addEventListener('click', closeEditUserModal);
         document.getElementById('save-edit-btn').addEventListener('click', saveUserEdit);
-        // Close modal if clicked outside
         window.addEventListener('click', function(event) {
             const modal = document.getElementById('editUserModal');
             if (event.target == modal) {
                 closeEditUserModal();
             }
         });
-        // --- End Edit User Modal Functions --- //
 
-        // Load Withdrawals from Firebase
         function loadWithdrawals() {
             const tbody = document.getElementById('withdrawals-tbody');
             tbody.innerHTML = '<tr><td colspan="8" class="no-data">Loading withdrawal requests...</td></tr>';
@@ -939,12 +897,18 @@
                     return;
                 }
                 allRequests.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+                withdrawalRequests = allRequests;
+                
                 allRequests.forEach(request => {
                     const tr = document.createElement('tr');
+                    tr.id = `withdrawal-${request.userId}-${request.requestId}`;
                     const formattedDate = new Date(request.timestamp).toLocaleString();
                     let statusClass = 'pending';
                     if (request.status === 'approved') statusClass = 'approved';
                     else if (request.status === 'rejected') statusClass = 'rejected';
+                    else if (request.status === 'processing') statusClass = 'processing';
+                    else if (request.status === 'success') statusClass = 'success';
+                    
                     tr.innerHTML = `
                         <td>${request.requestId}</td>
                         <td>${request.userId}</td>
@@ -958,7 +922,9 @@
                                 request.status === 'pending' ?
                                 `<button class="btn btn-approve" onclick="processWithdrawal('${request.userId}', '${request.requestId}', 'approve')">Approve</button>
                                  <button class="btn btn-reject" onclick="processWithdrawal('${request.userId}', '${request.requestId}', 'reject')">Reject</button>` :
-                                `<span style="font-size: 12px;">${request.status}</span>`
+                                (request.status === 'processing' ? 
+                                 `<button class="btn btn-processing" disabled>Processing...</button>` :
+                                 `<span style="font-size: 12px;">${request.status}</span>`)
                             }
                         </td>
                     `;
@@ -970,25 +936,54 @@
             });
         }
 
-        // Process (approve/reject) a withdrawal
         function processWithdrawal(userId, requestId, action) {
             if (!['approve', 'reject'].includes(action)) {
                 alert('Invalid action');
                 return;
             }
+            
+            // Update UI to show processing
+            const row = document.getElementById(`withdrawal-${userId}-${requestId}`);
+            if (row) {
+                const actionCell = row.cells[7];
+                actionCell.innerHTML = `<button class="btn btn-processing" disabled>Processing...</button>`;
+                
+                const statusCell = row.cells[6];
+                statusCell.innerHTML = `<span class="status status-processing">processing</span>`;
+            }
+            
+            // Update Firebase status to processing
+            const requestRef = database.ref(`withdrawals/${userId}/${requestId}/status`);
+            requestRef.set('processing')
+                .then(() => {
+                    // Simulate processing delay
+                    setTimeout(() => {
+                        // Complete the actual action
+                        completeWithdrawalAction(userId, requestId, action);
+                    }, 2000);
+                })
+                .catch(err => {
+                    console.error("Error setting status to processing:", err);
+                    alert('Error processing request: ' + err.message);
+                    loadWithdrawals(); // Reload to reset
+                });
+        }
+
+        function completeWithdrawalAction(userId, requestId, action) {
             const requestRef = database.ref(`withdrawals/${userId}/${requestId}`);
             const userBalanceRef = database.ref(`users/${userId}/userUSDTBalance`);
+            
             requestRef.once('value').then(requestSnapshot => {
                 const requestData = requestSnapshot.val();
                 if (!requestData) {
                     throw new Error("Request not found");
                 }
-                if (requestData.status !== 'pending') {
-                    throw new Error("Request is not pending");
+                if (requestData.status !== 'processing') {
+                    throw new Error("Request is not in processing state");
                 }
                 const requestAmount = parseFloat(requestData.amount);
                 if (action === 'approve') {
-                    return requestRef.update({ status: 'approved' })
+                    return requestRef.update({ status: 'success' })
                         .then(() => {
                             console.log(`Withdrawal ${requestId} for user ${userId} approved.`);
                         });
@@ -1006,21 +1001,20 @@
                         });
                 }
             }).then(() => {
-                alert(`Withdrawal request ${action}d successfully!`);
+                alert(`Withdrawal request ${action === 'approve' ? 'approved' : 'rejected'} successfully!`);
                 loadWithdrawals();
                 loadDashboardStats();
             }).catch(err => {
                 console.error(`Error ${action}ing withdrawal:`, err);
                 alert(`Error ${action}ing withdrawal: ${err.message}`);
+                loadWithdrawals();
             });
         }
 
-        // --- New Function to Load Referrals --- //
         function loadReferrals() {
              const tbody = document.getElementById('referrals-tbody');
              tbody.innerHTML = '<tr><td colspan="6" class="no-data">Loading referrals...</td></tr>';
 
-             // Load referral bonuses
              const referralsRef = database.ref('referralBonuses');
              referralsRef.once('value').then(snapshot => {
                  const referralData = snapshot.val();
@@ -1031,7 +1025,6 @@
                      return;
                  }
 
-                 // Load user names for display
                  database.ref('users').once('value').then(userSnapshot => {
                      const userData = userSnapshot.val();
                      const userNames = {};
@@ -1047,7 +1040,6 @@
                          return;
                      }
 
-                     // Sort by timestamp descending
                      referralList.sort((a, b) => new Date(b[1].timestamp) - new Date(a[1].timestamp));
 
                      referralList.forEach(([bonusId, bonusData]) => {
@@ -1073,9 +1065,7 @@
                  tbody.innerHTML = `<tr><td colspan="6" class="no-data">Error loading referrals: ${err.message}</td></tr>`;
              });
         }
-        // --- End New Function --- //
 
-         // --- New Functions for SMS Tab --- //
         function loadCurrentSMS() {
             const displayElement = document.getElementById('current-message-display');
             adminMessageRef.once('value').then(snapshot => {
@@ -1165,12 +1155,9 @@
                     }
                 });
         }
-        // Attach event listeners for SMS buttons
         document.getElementById('send-sms-btn')?.addEventListener('click', sendSMS);
         document.getElementById('delete-sms-btn')?.addEventListener('click', deleteSMS);
-        // --- End New Functions --- //
 
-        // --- New Functions for Settings Tab --- //
         function loadAppSettings() {
             const inputElement = document.getElementById('ad-zone-input');
             const statusElement = document.getElementById('settings-status-message');
@@ -1227,13 +1214,11 @@
         }
 
         document.getElementById('save-settings-btn')?.addEventListener('click', saveAppSettings);
-        // --- End Settings Functions --- //
 
-        // Initialize
         window.onload = function() {
             loadDashboardStats();
             loadWithdrawals();
-            loadReferrals(); // Load referrals on init
+            loadReferrals();
         };
     </script>
 </body>
