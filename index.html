@@ -320,7 +320,6 @@
         // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
-
         // Tab Switching
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.addEventListener('click', () => {
@@ -333,7 +332,6 @@
                 if (btn.dataset.tab === 'dashboard') loadDashboardStats();
             });
         });
-
         // Search Functionality
         document.getElementById('user-search')?.addEventListener('input', function() {
             filterTable('users-tbody', this.value);
@@ -341,7 +339,6 @@
         document.getElementById('withdrawal-search')?.addEventListener('input', function() {
             filterTable('withdrawals-tbody', this.value);
         });
-
         function filterTable(tbodyId, searchTerm) {
             const tbody = document.getElementById(tbodyId);
             const rows = tbody.querySelectorAll('tr');
@@ -351,7 +348,6 @@
                 row.style.display = text.includes(searchTerm) ? '' : 'none';
             });
         }
-
         // Load Dashboard Stats
         function loadDashboardStats() {
             database.ref('users/').once('value').then(snapshot => {
@@ -376,7 +372,6 @@
                 document.getElementById('pending-withdrawals').textContent = 'N/A';
             });
         }
-
         // Load Users
         function loadUsers() {
             const tbody = document.getElementById('users-tbody');
@@ -412,7 +407,6 @@
                 tbody.innerHTML = `<tr><td colspan="8" class="no-data">Error loading users: ${err.message}</td></tr>`;
             });
         }
-
         // Toggle User Block
         function toggleUserBlock(userId, isCurrentlyBlocked) {
             const newStatus = !isCurrentlyBlocked;
@@ -426,12 +420,10 @@
                     alert('Error updating user status: ' + err.message);
                 });
         }
-
         // Load Withdrawals from Firebase
         function loadWithdrawals() {
             const tbody = document.getElementById('withdrawals-tbody');
             tbody.innerHTML = '<tr><td colspan="8" class="no-data">Loading withdrawal requests...</td></tr>';
-
             // Listen for changes in the 'withdrawals' node
             database.ref('withdrawals').once('value').then(snapshot => {
                 const data = snapshot.val();
@@ -440,7 +432,6 @@
                     tbody.innerHTML = '<tr><td colspan="8" class="no-data">No withdrawal requests found</td></tr>';
                     return;
                 }
-
                 let allRequests = [];
                 // Flatten the data structure (withdrawals/userId/requestId)
                 Object.entries(data).forEach(([userId, userRequests]) => {
@@ -452,22 +443,18 @@
                         });
                     });
                 });
-
                 if (allRequests.length === 0) {
                     tbody.innerHTML = '<tr><td colspan="8" class="no-data">No withdrawal requests found</td></tr>';
                     return;
                 }
-
                 // Sort by timestamp (newest first)
                 allRequests.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-
                 allRequests.forEach(request => {
                     const tr = document.createElement('tr');
                     const formattedDate = new Date(request.timestamp).toLocaleString(); // Format date
                     let statusClass = 'pending';
                     if (request.status === 'approved') statusClass = 'approved';
                     else if (request.status === 'rejected') statusClass = 'rejected';
-
                     tr.innerHTML = `
                         <td>${request.requestId}</td>
                         <td>${request.userId}</td>
@@ -492,17 +479,14 @@
                 tbody.innerHTML = `<tr><td colspan="8" class="no-data">Error loading withdrawal requests: ${err.message}</td></tr>`;
             });
         }
-
         // Process (approve/reject) a withdrawal
         function processWithdrawal(userId, requestId, action) {
             if (!['approve', 'reject'].includes(action)) {
                 alert('Invalid action');
                 return;
             }
-
             const requestRef = database.ref(`withdrawals/${userId}/${requestId}`);
             const userBalanceRef = database.ref(`users/${userId}/userUSDTBalance`);
-
             requestRef.once('value').then(requestSnapshot => {
                 const requestData = requestSnapshot.val();
                 if (!requestData) {
@@ -511,9 +495,7 @@
                 if (requestData.status !== 'pending') {
                     throw new Error("Request is not pending");
                 }
-
                 const requestAmount = parseFloat(requestData.amount);
-
                 if (action === 'approve') {
                     // Update request status to approved
                     return requestRef.update({ status: 'approved' })
@@ -547,7 +529,6 @@
                 alert(`Error ${action}ing withdrawal: ${err.message}`);
             });
         }
-
         // Initialize
         window.onload = function() {
             loadDashboardStats();
