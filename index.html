@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin Panel - Earning App (Final Update)</title>
+    <title>Admin Panel - Earning App (Updated Referral & Ad Count & SMS)</title>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.22.0/firebase-database-compat.js"></script>
     <style>
@@ -13,7 +13,6 @@
             --success: #43a047;
             --warning: #ef6c00;
             --danger: #e53935;
-            --processing: #ff9800;
             --dark: #121212;
             --darker: #0a0a0a;
             --card-bg: #1f1f1f;
@@ -136,14 +135,6 @@
             background: rgba(229, 57, 53, 0.2);
             color: #ef9a9a;
         }
-        .status.processing {
-            background: rgba(255, 152, 0, 0.2);
-            color: #ffcc80;
-        }
-        .status.success {
-            background: rgba(67, 160, 71, 0.4);
-            color: #a5d6a7;
-        }
         .btn {
             padding: 8px 15px;
             border: none;
@@ -152,7 +143,6 @@
             font-weight: 600;
             font-size: 13px;
             transition: all 0.2s;
-            margin: 2px;
         }
         .btn-approve {
             background: var(--success);
@@ -161,27 +151,22 @@
         .btn-reject {
             background: var(--danger);
             color: white;
+            margin-left: 8px;
         }
         .btn-block {
             background: var(--warning);
             color: white;
+            margin-left: 8px;
         }
         .btn-unblock {
             background: #6a1b9a;
             color: white;
+            margin-left: 8px;
         }
-        .btn-delete {
+        .btn-delete { /* New style for Delete SMS button */
             background: var(--danger);
             color: white;
-        }
-        .btn-edit {
-            background: var(--primary);
-            color: white;
-        }
-        .btn-processing {
-            background: var(--processing);
-            color: white;
-            cursor: not-allowed;
+            margin-left: 8px;
         }
         .btn:hover {
             opacity: 0.9;
@@ -216,16 +201,19 @@
             color: #777;
             font-style: italic;
         }
+        /* --- New Styles for Ad Views Card --- */
         #ad-views-card {
-            background: rgba(106, 27, 154, 0.15);
-            border: 1px solid rgba(106, 27, 154, 0.3);
+             background: rgba(106, 27, 154, 0.15); /* Purple background */
+             border: 1px solid rgba(106, 27, 154, 0.3);
         }
         #ad-views-card h3 {
-            color: #ce93d8;
+            color: #ce93d8; /* Light purple text */
         }
         #ad-views-card .value {
-            color: #ab47bc;
+            color: #ab47bc; /* Purple text */
         }
+        /* --- End New Styles --- */
+        /* --- New Styles for SMS Tab --- */
         #sms-message-input {
             width: 100%;
             padding: 12px;
@@ -247,8 +235,8 @@
             color: #aaa;
         }
         #current-message-display.has-content {
-            font-style: normal;
-            color: #f5f5f5;
+             font-style: normal;
+             color: #f5f5f5;
         }
         #sms-status-message {
             margin-top: 10px;
@@ -262,69 +250,7 @@
         #sms-status-message.error {
             color: var(--danger);
         }
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 2000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            overflow: auto;
-            background-color: rgba(0,0,0,0.7);
-        }
-        .modal-content {
-            background-color: var(--card-bg);
-            margin: 10% auto;
-            padding: 25px;
-            border: 1px solid var(--border);
-            border-radius: 10px;
-            width: 90%;
-            max-width: 500px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.5);
-        }
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-        .modal-header h2 {
-            margin: 0;
-            color: var(--primary);
-        }
-        .close-modal {
-            color: #aaa;
-            font-size: 28px;
-            font-weight: bold;
-            cursor: pointer;
-        }
-        .close-modal:hover {
-            color: white;
-        }
-        .form-group-modal {
-            margin-bottom: 15px;
-        }
-        .form-group-modal label {
-            display: block;
-            margin-bottom: 5px;
-            color: #ddd;
-        }
-        .form-group-modal input, .form-group-modal select {
-            width: 100%;
-            padding: 10px;
-            border-radius: 6px;
-            border: 1px solid var(--border);
-            background: #2a2a2a;
-            color: white;
-            box-sizing: border-box;
-        }
-        .modal-actions {
-            display: flex;
-            justify-content: flex-end;
-            gap: 10px;
-            margin-top: 20px;
-        }
+        /* --- End New Styles --- */
         @media (max-width: 768px) {
             .search-box {
                 width: 100%;
@@ -349,10 +275,9 @@
                 <button class="tab-btn active" data-tab="dashboard">📊 Dashboard</button>
                 <button class="tab-btn" data-tab="users">👥 Users</button>
                 <button class="tab-btn" data-tab="withdrawals">💸 Withdrawals</button>
-                <button class="tab-btn" data-tab="referrals">👥 Referrals</button>
+                 <!-- --- New SMS Tab Button --- -->
                 <button class="tab-btn" data-tab="sms">✉️ SMS</button>
-                <button class="tab-btn" data-tab="settings">⚙️ Settings</button>
-                <button class="tab-btn" data-tab="theme">🎨 Theme</button>
+                 <!-- --- End New Button --- -->
             </div>
         </header>
         <!-- Dashboard Tab -->
@@ -366,30 +291,26 @@
                     <h3>Total Earnings</h3>
                     <div class="value" id="total-earnings">0.0000 USDT</div>
                 </div>
+                 <!-- --- New Card for Total Ad Views --- -->
                 <div class="stat-card" id="ad-views-card">
                     <h3>Total Ad Views</h3>
                     <div class="value" id="total-ad-views">0</div>
                 </div>
+                <!-- --- End New Card --- -->
                 <div class="stat-card">
-                    <h3>Successful Referrals</h3>
+                    <h3>Successful Referrals</h3> <!-- Updated Title -->
                     <div class="value" id="total-referrals">0</div>
                 </div>
-                <div class="stat-card">
+                 <div class="stat-card">
                     <h3>Pending Withdrawals</h3>
                     <div class="value" id="pending-withdrawals">0</div>
-                </div>
-                <div class="stat-card">
-                    <h3>New Users (Today)</h3>
-                    <div class="value" id="new-users-today">0</div>
                 </div>
             </div>
             <div class="card">
                 <div class="card-header">
                     <h2>Recent Activity</h2>
                 </div>
-                <div id="recent-activity-list">
-                    <div class="no-data">No recent activity to display</div>
-                </div>
+                <div class="no-data">No recent activity to display</div>
             </div>
         </div>
         <!-- Users Tab -->
@@ -408,7 +329,7 @@
                                 <th>Phone</th>
                                 <th>Balance</th>
                                 <th>Tasks</th>
-                                <th>Referrals</th>
+                                <th>Referrals</th> <!-- This column name is fine, shows successful referrals -->
                                 <th>Status</th>
                                 <th>Actions</th>
                             </tr>
@@ -448,31 +369,7 @@
                 </div>
             </div>
         </div>
-        <div id="referrals" class="tab-content">
-            <div class="card">
-                <div class="card-header">
-                    <h2>👥 Successful Referrals</h2>
-                    <input type="text" class="search-box" id="referral-search" placeholder="Search by referrer ID or referee ID...">
-                </div>
-                <div style="overflow-x: auto;">
-                    <table>
-                        <thead>
-                            <tr>
-                                <th>Referrer ID</th>
-                                <th>Referrer Name</th>
-                                <th>Referee ID</th>
-                                <th>Referee Name</th>
-                                <th>Date</th>
-                                <th>Bonus</th>
-                            </tr>
-                        </thead>
-                        <tbody id="referrals-tbody">
-                            <tr><td colspan="6" class="no-data">Loading referrals...</td></tr>
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
+         <!-- --- New SMS Tab --- -->
         <div id="sms" class="tab-content">
             <div class="card">
                 <div class="card-header">
@@ -488,71 +385,15 @@
             <div class="card">
                 <div class="card-header">
                     <h2>Current Message</h2>
-                    <button id="delete-sms-btn" class="btn btn-delete">Delete Message</button>
+                     <button id="delete-sms-btn" class="btn btn-delete">Delete Message</button>
                 </div>
                 <div id="current-message-display">No message set.</div>
             </div>
         </div>
-        <div id="settings" class="tab-content">
-            <div class="card">
-                <div class="card-header">
-                    <h2>⚙️ App Settings</h2>
-                </div>
-                <div class="form-group-modal">
-                    <label for="ad-zone-input">Ad Network Zone ID:</label>
-                    <input type="text" id="ad-zone-input" placeholder="Enter new Ad Zone ID">
-                </div>
-                <button id="save-settings-btn" class="btn" style="background-color: var(--primary);">Save Settings</button>
-                <div id="settings-status-message" style="margin-top: 15px; text-align: center; min-height: 20px;"></div>
-            </div>
-        </div>
-        <div id="theme" class="tab-content">
-            <div class="card">
-                <div class="card-header">
-                    <h2>🎨 Theme Settings</h2>
-                </div>
-                <div class="form-group-modal">
-                    <label for="primary-color">Primary Color:</label>
-                    <input type="color" id="primary-color">
-                </div>
-                <div class="form-group-modal">
-                    <label for="background-color">Background Color:</label>
-                    <input type="color" id="background-color">
-                </div>
-                <div class="form-group-modal">
-                    <label for="success-color">Success Color:</label>
-                    <input type="color" id="success-color">
-                </div>
-                <div class="form-group-modal">
-                    <label for="danger-color">Danger Color:</label>
-                    <input type="color" id="danger-color">
-                </div>
-                <button id="save-theme-btn" class="btn" style="background-color: var(--primary);">Save Theme</button>
-                <div id="theme-status-message" style="margin-top: 15px; text-align: center; min-height: 20px;"></div>
-            </div>
-        </div>
-    </div>
-    <div id="editUserModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>Edit User</h2>
-                <span class="close-modal">&times;</span>
-            </div>
-            <div class="form-group-modal">
-                <label for="edit-user-id">User ID:</label>
-                <input type="text" id="edit-user-id" readonly>
-            </div>
-            <div class="form-group-modal">
-                <label for="edit-user-balance">Balance (USDT):</label>
-                <input type="number" id="edit-user-balance" step="0.0001" min="0">
-            </div>
-            <div class="modal-actions">
-                <button id="cancel-edit-btn" class="btn">Cancel</button>
-                <button id="save-edit-btn" class="btn" style="background-color: var(--success);">Save</button>
-            </div>
-        </div>
+        <!-- --- End New Tab --- -->
     </div>
     <script>
+        // Firebase Config (Same as user app)
         const firebaseConfig = {
             apiKey: "AIzaSyD3BGZ0MVLpbQbIpLUAnYvWNEIyk7Y6S0Q",
             authDomain: "earning-app-80258.firebaseapp.com",
@@ -562,14 +403,13 @@
             messagingSenderId: "25930019210",
             appId: "1:25930019210:web:6441562811d3e7e9631873"
         };
+        // Initialize Firebase
         firebase.initializeApp(firebaseConfig);
         const database = firebase.database();
+        // --- New Reference for Admin Message --- //
         const adminMessageRef = database.ref('adminMessage');
-        const appSettingsRef = database.ref('appSettings');
-
-        let currentEditUserId = null;
-        let withdrawalRequests = {};
-
+        // --- End New Reference --- //
+        // Tab Switching
         document.querySelectorAll('.tab-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
@@ -578,22 +418,17 @@
                 document.getElementById(btn.dataset.tab).classList.add('active');
                 if (btn.dataset.tab === 'users') loadUsers();
                 if (btn.dataset.tab === 'withdrawals') loadWithdrawals();
-                if (btn.dataset.tab === 'referrals') loadReferrals();
                 if (btn.dataset.tab === 'dashboard') loadDashboardStats();
+                // --- Load SMS content when SMS tab is activated --- //
                 if (btn.dataset.tab === 'sms') loadCurrentSMS();
-                if (btn.dataset.tab === 'settings') loadAppSettings();
-                if (btn.dataset.tab === 'theme') loadThemeSettings();
             });
         });
-
+        // Search Functionality
         document.getElementById('user-search')?.addEventListener('input', function() {
             filterTable('users-tbody', this.value);
         });
         document.getElementById('withdrawal-search')?.addEventListener('input', function() {
             filterTable('withdrawals-tbody', this.value);
-        });
-        document.getElementById('referral-search')?.addEventListener('input', function() {
-            filterTable('referrals-tbody', this.value);
         });
         function filterTable(tbodyId, searchTerm) {
             const tbody = document.getElementById(tbodyId);
@@ -604,207 +439,58 @@
                 row.style.display = text.includes(searchTerm) ? '' : 'none';
             });
         }
-
-        function getStartOfToday() {
-            const now = new Date();
-            return new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
-        }
-
-        function formatDateForActivity(dateObj) {
-            const options = { year: 'numeric', month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' };
-            return dateObj.toLocaleDateString('en-US', options);
-        }
-
-        function loadRecentActivity() {
-            const activityContainer = document.getElementById('recent-activity-list');
-            if (!activityContainer) return;
-
-            activityContainer.innerHTML = '<div class="no-data">Loading recent activity...</div>';
-
-            const startOfToday = getStartOfToday();
-            const newUsersTodayRef = database.ref('users').orderByChild('lastSeen').startAt(startOfToday);
-            newUsersTodayRef.once('value').then(snapshot => {
-                const userData = snapshot.val();
-                const newUsersTodayList = [];
-
-                if (userData) {
-                    Object.entries(userData).forEach(([userId, user]) => {
-                        const userLastSeen = user.lastSeen ? new Date(user.lastSeen).getTime() : 0;
-                        if (userLastSeen >= startOfToday) {
-                            newUsersTodayList.push({
-                                type: 'user',
-                                id: userId,
-                                name: user.telegramUser?.name || 'Unknown',
-                                timestamp: user.lastSeen ? new Date(user.lastSeen) : new Date()
-                            });
-                        }
-                    });
+        // Load Dashboard Stats
+        function loadDashboardStats() {
+            database.ref('users/').once('value').then(snapshot => {
+                const data = snapshot.val();
+                if (!data) {
+                    // Reset stats if no data
+                    document.getElementById('total-users').textContent = '0';
+                    document.getElementById('total-earnings').textContent = '0.0000 USDT';
+                    document.getElementById('total-referrals').textContent = '0';
+                    document.getElementById('pending-withdrawals').textContent = '0';
+                    document.getElementById('total-ad-views').textContent = '0'; // Reset new stat
+                    return;
                 }
+                const users = Object.values(data);
+                let totalEarnings = 0;
+                // let totalReferrals = 0; // Old way
+                let totalSuccessfulReferrals = 0; // New way
+                let pendingWithdrawals = 0;
+                let totalAdViews = 0; // New stat
 
-                const recentWithdrawalsRef = database.ref('withdrawals');
-                recentWithdrawalsRef.once('value').then(withdrawalSnapshot => {
-                    const withdrawalData = withdrawalSnapshot.val();
-                    const recentWithdrawalsList = [];
-
-                    if (withdrawalData) {
-                        Object.entries(withdrawalData).forEach(([userId, userRequests]) => {
-                            Object.entries(userRequests).forEach(([requestId, requestData]) => {
-                                const requestTimestamp = requestData.timestamp ? new Date(requestData.timestamp).getTime() : 0;
-                                if (requestTimestamp >= startOfToday) {
-                                    recentWithdrawalsList.push({
-                                        type: 'withdrawal',
-                                        userId: userId,
-                                        requestId: requestId,
-                                        amount: requestData.amount,
-                                        status: requestData.status || 'pending',
-                                        timestamp: requestData.timestamp ? new Date(requestData.timestamp) : new Date()
-                                    });
-                                }
-                            });
+                users.forEach(user => {
+                    totalEarnings += parseFloat(user.userUSDTBalance || 0);
+                    // totalReferrals += parseInt(user.referralData?.totalReferralsInitiated || 0); // Old way
+                    totalSuccessfulReferrals += parseInt(user.referralData?.successfulReferrals || 0); // New way
+                    totalAdViews += parseInt(user.todayStats?.monetagTasksCompleted || 0); // Aggregate ad views
+                    // Count pending withdrawals (simple count for now)
+                     if (user.withdrawals) { // Assuming withdrawals are stored under user node
+                        Object.values(user.withdrawals).forEach(request => {
+                            if (request.status === 'pending') pendingWithdrawals++;
                         });
-                    }
-
-                    const recentReferralsRef = database.ref('referralBonuses');
-                    recentReferralsRef.orderByChild('timestamp').startAt(new Date(startOfToday).toISOString()).once('value')
-                        .then(referralSnapshot => {
-                            const referralBonusData = referralSnapshot.val();
-                            const recentReferralsList = [];
-
-                            if (referralBonusData) {
-                                Object.entries(referralBonusData).forEach(([bonusId, bonusData]) => {
-                                    recentReferralsList.push({
-                                        type: 'referral',
-                                        referrerId: bonusData.referrerId,
-                                        refereeId: bonusData.refereeId,
-                                        amount: bonusData.amount,
-                                        timestamp: bonusData.timestamp ? new Date(bonusData.timestamp) : new Date()
-                                    });
-                                });
-                            }
-
-                            let allActivities = [
-                                ...newUsersTodayList,
-                                ...recentWithdrawalsList,
-                                ...recentReferralsList
-                            ];
-
-                            allActivities.sort((a, b) => b.timestamp - a.timestamp);
-                            activityContainer.innerHTML = '';
-
-                            if (allActivities.length === 0) {
-                                activityContainer.innerHTML = '<div class="no-data">No recent activity to display</div>';
-                                return;
-                            }
-
-                            allActivities.slice(0, 20).forEach(activity => {
-                                const activityItem = document.createElement('div');
-                                activityItem.style.padding = '10px';
-                                activityItem.style.borderBottom = '1px solid var(--border)';
-                                activityItem.style.fontSize = '14px';
-
-                                let activityText = '';
-                                let activityTime = formatDateForActivity(activity.timestamp);
-
-                                if (activity.type === 'user') {
-                                    activityText = `<strong>New User:</strong> ${activity.name} (ID: ${activity.id})`;
-                                    activityItem.style.color = '#bbdefb';
-                                } else if (activity.type === 'withdrawal') {
-                                    const statusClass = activity.status === 'approved' ? 'approved' :
-                                                       activity.status === 'rejected' ? 'rejected' : 'pending';
-                                    activityText = `<strong>Withdrawal:</strong> ${parseFloat(activity.amount).toFixed(4)} USDT by User ${activity.userId} [${activity.status}]`;
-                                    activityItem.style.color = statusClass === 'approved' ? '#a5d6a7' : 
-                                                              statusClass === 'rejected' ? '#ef9a9a' : 
-                                                                                           '#ffcc80';
-                                } else if (activity.type === 'referral') {
-                                    activityText = `<strong>Referral Bonus:</strong> ${parseFloat(activity.amount).toFixed(4)} USDT for User ${activity.referrerId} (Referee: ${activity.refereeId})`;
-                                    activityItem.style.color = '#ce93d8';
-                                }
-
-                                activityItem.innerHTML = `${activityText} <span style="float: right; opacity: 0.8;">${activityTime}</span>`;
-                                activityContainer.appendChild(activityItem);
-                            });
-                        }).catch(err => {
-                            console.error("Error loading recent referrals for activity:", err);
-                            activityContainer.innerHTML = '<div class="no-data">Error loading recent activity.</div>';
-                        });
-
-                }).catch(err => {
-                    console.error("Error loading recent withdrawals for activity:", err);
-                    activityContainer.innerHTML = '<div class="no-data">Error loading recent activity.</div>';
+                     }
+                     // Alternative if withdrawals are in a separate top-level node:
+                     // This requires a separate fetch, which is less efficient for dashboard stats.
+                     // We'll stick with the user node approach for simplicity here.
                 });
-
+                document.getElementById('total-users').textContent = users.length;
+                document.getElementById('total-earnings').textContent = totalEarnings.toFixed(4) + ' USDT';
+                // document.getElementById('total-referrals').textContent = totalReferrals; // Old way
+                document.getElementById('total-referrals').textContent = totalSuccessfulReferrals; // New way
+                document.getElementById('pending-withdrawals').textContent = pendingWithdrawals;
+                document.getElementById('total-ad-views').textContent = totalAdViews; // New stat
             }).catch(err => {
-                console.error("Error loading new users for activity:", err);
-                activityContainer.innerHTML = '<div class="no-data">Error loading recent activity.</div>';
+                 console.error("Error loading dashboard stats:", err);
+                 // Reset stats on error
+                 document.getElementById('total-users').textContent = 'Error';
+                 document.getElementById('total-earnings').textContent = 'Error';
+                 document.getElementById('total-referrals').textContent = 'Error';
+                 document.getElementById('pending-withdrawals').textContent = 'Error';
+                 document.getElementById('total-ad-views').textContent = 'Error'; // Reset new stat
             });
         }
-
-        function loadDashboardStats() {
-            const usersPromise = database.ref('users/').once('value');
-            const withdrawalsPromise = database.ref('withdrawals').once('value');
-            const referralsPromise = database.ref('referralBonuses').once('value');
-            const settingsPromise = appSettingsRef.once('value');
-
-            Promise.all([usersPromise, withdrawalsPromise, referralsPromise, settingsPromise])
-                .then(([usersSnapshot, withdrawalsSnapshot, referralsSnapshot, settingsSnapshot]) => {
-                    const userData = usersSnapshot.val();
-                    const withdrawalData = withdrawalsSnapshot.val();
-                    const referralData = referralsSnapshot.val();
-                    const settingsData = settingsSnapshot.val();
-
-                    let totalUsers = 0;
-                    let totalEarnings = 0;
-                    let totalSuccessfulReferrals = 0;
-                    let pendingWithdrawals = 0;
-                    let totalAdViews = 0;
-                    let newUsersToday = 0;
-
-                    const startOfToday = getStartOfToday();
-
-                    if (userData) {
-                        totalUsers = Object.keys(userData).length;
-                        Object.values(userData).forEach(user => {
-                            totalEarnings += parseFloat(user.userUSDTBalance || 0);
-                            totalSuccessfulReferrals += parseInt(user.referralData?.successfulReferrals || 0);
-                            totalAdViews += parseInt(user.todayStats?.monetagTasksCompleted || 0);
-
-                            if (user.lastSeen) {
-                                const userLastSeenTimestamp = new Date(user.lastSeen).getTime();
-                                if (userLastSeenTimestamp >= startOfToday) {
-                                    newUsersToday++;
-                                }
-                            }
-                        });
-                    }
-
-                    if (withdrawalData) {
-                        Object.values(withdrawalData).forEach(userRequests => {
-                            Object.values(userRequests).forEach(request => {
-                                if (request.status === 'pending') pendingWithdrawals++;
-                            });
-                        });
-                    }
-
-                    document.getElementById('total-users').textContent = totalUsers;
-                    document.getElementById('total-earnings').textContent = totalEarnings.toFixed(4) + ' USDT';
-                    document.getElementById('total-referrals').textContent = totalSuccessfulReferrals;
-                    document.getElementById('pending-withdrawals').textContent = pendingWithdrawals;
-                    document.getElementById('total-ad-views').textContent = totalAdViews;
-                    document.getElementById('new-users-today').textContent = newUsersToday;
-
-                    loadRecentActivity();
-                }).catch(err => {
-                    console.error("Error loading dashboard stats:", err);
-                    document.getElementById('total-users').textContent = 'Error';
-                    document.getElementById('total-earnings').textContent = 'Error';
-                    document.getElementById('total-referrals').textContent = 'Error';
-                    document.getElementById('pending-withdrawals').textContent = 'Error';
-                    document.getElementById('total-ad-views').textContent = 'Error';
-                    document.getElementById('new-users-today').textContent = 'Error';
-                    document.getElementById('recent-activity-list').innerHTML = '<div class="no-data">Error loading recent activity.</div>';
-                });
-        }
-
+        // Load Users
         function loadUsers() {
             const tbody = document.getElementById('users-tbody');
             tbody.innerHTML = '<tr><td colspan="8" class="no-data">Loading users...</td></tr>';
@@ -817,6 +503,7 @@
                 }
                 Object.entries(data).forEach(([userId, user]) => {
                     const isBlocked = user.isBlocked || false;
+                    // Display successful referrals in the user list
                     const successfulReferrals = user.referralData?.successfulReferrals || 0;
                     const tr = document.createElement('tr');
                     tr.innerHTML = `
@@ -825,14 +512,13 @@
                         <td>${user.telegramUser?.phoneNumber || 'Not shared'}</td>
                         <td>${parseFloat(user.userUSDTBalance || 0).toFixed(4)} USDT</td>
                         <td>${user.todayStats?.monetagTasksCompleted || 0}</td>
-                        <td>${successfulReferrals}</td>
+                        <td>${successfulReferrals}</td> <!-- Show successful referrals -->
                         <td><span class="status ${isBlocked ? 'rejected' : 'approved'}">${isBlocked ? 'Blocked' : 'Active'}</span></td>
                         <td>
                             <button class="btn ${isBlocked ? 'btn-unblock' : 'btn-block'}"
                                     onclick="toggleUserBlock('${userId}', ${isBlocked})">
                                 ${isBlocked ? 'Unblock' : 'Block'}
                             </button>
-                            <button class="btn btn-edit" onclick="openEditUserModal('${userId}', ${user.userUSDTBalance || 0})">Edit</button>
                         </td>
                     `;
                     tbody.appendChild(tr);
@@ -841,69 +527,24 @@
                 tbody.innerHTML = `<tr><td colspan="8" class="no-data">Error loading users: ${err.message}</td></tr>`;
             });
         }
-
+        // Toggle User Block
         function toggleUserBlock(userId, isCurrentlyBlocked) {
             const newStatus = !isCurrentlyBlocked;
-            database.ref(`users/${userId}`).update({ isBlocked: newStatus })
+            database.ref(`users/${userId}/isBlocked`).set(newStatus)
                 .then(() => {
                     alert(`User ${newStatus ? 'blocked' : 'unblocked'} successfully!`);
-                    loadUsers();
-                    loadDashboardStats();
+                    loadUsers(); // Refresh the user list
                 })
                 .catch(err => {
-                    console.error("Error updating user block status:", err);
+                    console.error("Error updating user status:", err);
                     alert('Error updating user status: ' + err.message);
                 });
         }
-
-        function openEditUserModal(userId, currentBalance) {
-            currentEditUserId = userId;
-            document.getElementById('edit-user-id').value = userId;
-            document.getElementById('edit-user-balance').value = parseFloat(currentBalance).toFixed(4);
-            document.getElementById('editUserModal').style.display = 'block';
-        }
-
-        function closeEditUserModal() {
-            document.getElementById('editUserModal').style.display = 'none';
-            currentEditUserId = null;
-        }
-
-        function saveUserEdit() {
-            if (!currentEditUserId) {
-                alert('No user selected for editing.');
-                return;
-            }
-            const newBalance = parseFloat(document.getElementById('edit-user-balance').value);
-            if (isNaN(newBalance) || newBalance < 0) {
-                alert('Please enter a valid non-negative balance.');
-                return;
-            }
-            database.ref(`users/${currentEditUserId}`).update({ userUSDTBalance: newBalance })
-                .then(() => {
-                    alert('User balance updated successfully!');
-                    closeEditUserModal();
-                    loadUsers();
-                    loadDashboardStats();
-                })
-                .catch(err => {
-                    console.error("Error updating user balance:", err);
-                    alert('Error updating user balance: ' + err.message);
-                });
-        }
-
-        document.querySelector('#editUserModal .close-modal').addEventListener('click', closeEditUserModal);
-        document.getElementById('cancel-edit-btn').addEventListener('click', closeEditUserModal);
-        document.getElementById('save-edit-btn').addEventListener('click', saveUserEdit);
-        window.addEventListener('click', function(event) {
-            const modal = document.getElementById('editUserModal');
-            if (event.target == modal) {
-                closeEditUserModal();
-            }
-        });
-
+        // Load Withdrawals from Firebase
         function loadWithdrawals() {
             const tbody = document.getElementById('withdrawals-tbody');
             tbody.innerHTML = '<tr><td colspan="8" class="no-data">Loading withdrawal requests...</td></tr>';
+            // Listen for changes in the 'withdrawals' node
             database.ref('withdrawals').once('value').then(snapshot => {
                 const data = snapshot.val();
                 tbody.innerHTML = '';
@@ -912,6 +553,7 @@
                     return;
                 }
                 let allRequests = [];
+                // Flatten the data structure (withdrawals/userId/requestId)
                 Object.entries(data).forEach(([userId, userRequests]) => {
                     Object.entries(userRequests).forEach(([requestId, requestData]) => {
                         allRequests.push({
@@ -925,19 +567,14 @@
                     tbody.innerHTML = '<tr><td colspan="8" class="no-data">No withdrawal requests found</td></tr>';
                     return;
                 }
+                // Sort by timestamp (newest first)
                 allRequests.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
-                withdrawalRequests = allRequests;
-                
                 allRequests.forEach(request => {
                     const tr = document.createElement('tr');
-                    tr.id = `withdrawal-${request.userId}-${request.requestId}`;
-                    const formattedDate = new Date(request.timestamp).toLocaleString();
+                    const formattedDate = new Date(request.timestamp).toLocaleString(); // Format date
                     let statusClass = 'pending';
                     if (request.status === 'approved') statusClass = 'approved';
                     else if (request.status === 'rejected') statusClass = 'rejected';
-                    else if (request.status === 'processing') statusClass = 'processing';
-                    else if (request.status === 'success') statusClass = 'success';
-                    
                     tr.innerHTML = `
                         <td>${request.requestId}</td>
                         <td>${request.userId}</td>
@@ -951,9 +588,7 @@
                                 request.status === 'pending' ?
                                 `<button class="btn btn-approve" onclick="processWithdrawal('${request.userId}', '${request.requestId}', 'approve')">Approve</button>
                                  <button class="btn btn-reject" onclick="processWithdrawal('${request.userId}', '${request.requestId}', 'reject')">Reject</button>` :
-                                (request.status === 'processing' ? 
-                                 `<button class="btn btn-processing" disabled>Processing...</button>` :
-                                 `<span style="font-size: 12px;">${request.status}</span>`)
+                                `<span style="font-size: 12px;">${request.status}</span>`
                             }
                         </td>
                     `;
@@ -964,135 +599,61 @@
                 tbody.innerHTML = `<tr><td colspan="8" class="no-data">Error loading withdrawal requests: ${err.message}</td></tr>`;
             });
         }
-
+        // Process (approve/reject) a withdrawal
         function processWithdrawal(userId, requestId, action) {
             if (!['approve', 'reject'].includes(action)) {
                 alert('Invalid action');
                 return;
             }
-            
-            const row = document.getElementById(`withdrawal-${userId}-${requestId}`);
-            if (row) {
-                const actionCell = row.cells[7];
-                actionCell.innerHTML = `<button class="btn btn-processing" disabled>Processing...</button>`;
-                
-                const statusCell = row.cells[6];
-                statusCell.innerHTML = `<span class="status status-processing">processing</span>`;
-            }
-            
-            const requestRef = database.ref(`withdrawals/${userId}/${requestId}/status`);
-            requestRef.set('processing')
-                .then(() => {
-                    setTimeout(() => {
-                        completeWithdrawalAction(userId, requestId, action);
-                    }, 2000);
-                })
-                .catch(err => {
-                    console.error("Error setting status to processing:", err);
-                    alert('Error processing request: ' + err.message);
-                    loadWithdrawals();
-                });
-        }
-
-        function completeWithdrawalAction(userId, requestId, action) {
             const requestRef = database.ref(`withdrawals/${userId}/${requestId}`);
             const userBalanceRef = database.ref(`users/${userId}/userUSDTBalance`);
-            
             requestRef.once('value').then(requestSnapshot => {
                 const requestData = requestSnapshot.val();
                 if (!requestData) {
                     throw new Error("Request not found");
                 }
-                if (requestData.status !== 'processing') {
-                    throw new Error("Request is not in processing state");
+                if (requestData.status !== 'pending') {
+                    throw new Error("Request is not pending");
                 }
                 const requestAmount = parseFloat(requestData.amount);
                 if (action === 'approve') {
-                    return requestRef.update({ status: 'success' })
+                    // Update request status to approved
+                    return requestRef.update({ status: 'approved' })
                         .then(() => {
+                            // Optionally, log the approval or send notification
                             console.log(`Withdrawal ${requestId} for user ${userId} approved.`);
                         });
                 } else if (action === 'reject') {
+                    // Update request status to rejected
                     return requestRef.update({ status: 'rejected' })
                         .then(() => {
+                             // Refund balance to the user
                             return userBalanceRef.transaction(currentBalance => {
+                                // Ensure currentBalance is a number
                                 const balance = parseFloat(currentBalance) || 0;
                                 return balance + requestAmount;
                             }).then(() => {
                                 console.log(`Withdrawal ${requestId} for user ${userId} rejected and ${requestAmount} USDT refunded.`);
                             }).catch(err => {
                                 console.error("Error refunding balance:", err);
+                                // Even if refund fails, the request status is updated.
+                                // You might want to handle this case (e.g., manual refund)
                             });
                         });
                 }
             }).then(() => {
-                alert(`Withdrawal request ${action === 'approve' ? 'approved' : 'rejected'} successfully!`);
-                loadWithdrawals();
-                loadDashboardStats();
+                alert(`Withdrawal request ${action}d successfully!`);
+                loadWithdrawals(); // Refresh the list
+                loadDashboardStats(); // Refresh dashboard stats (e.g., pending count)
             }).catch(err => {
                 console.error(`Error ${action}ing withdrawal:`, err);
                 alert(`Error ${action}ing withdrawal: ${err.message}`);
-                loadWithdrawals();
             });
         }
-
-        function loadReferrals() {
-            const tbody = document.getElementById('referrals-tbody');
-            tbody.innerHTML = '<tr><td colspan="6" class="no-data">Loading referrals...</td></tr>';
-
-            const referralsRef = database.ref('referralBonuses');
-            referralsRef.once('value').then(snapshot => {
-                const referralData = snapshot.val();
-                tbody.innerHTML = '';
-
-                if (!referralData) {
-                    tbody.innerHTML = '<tr><td colspan="6" class="no-data">No referrals found</td></tr>';
-                    return;
-                }
-
-                database.ref('users').once('value').then(userSnapshot => {
-                    const userData = userSnapshot.val();
-                    const userNames = {};
-                    if (userData) {
-                        Object.entries(userData).forEach(([uid, udata]) => {
-                            userNames[uid] = udata.telegramUser?.name || 'Unknown';
-                        });
-                    }
-
-                    const referralList = Object.entries(referralData);
-                    if (referralList.length === 0) {
-                        tbody.innerHTML = '<tr><td colspan="6" class="no-data">No referrals found</td></tr>';
-                        return;
-                    }
-
-                    referralList.sort((a, b) => new Date(b[1].timestamp) - new Date(a[1].timestamp));
-
-                    referralList.forEach(([bonusId, bonusData]) => {
-                        const tr = document.createElement('tr');
-                        const formattedDate = new Date(bonusData.timestamp).toLocaleString();
-                        tr.innerHTML = `
-                            <td>${bonusData.referrerId}</td>
-                            <td>${userNames[bonusData.referrerId] || 'Unknown'}</td>
-                            <td>${bonusData.refereeId}</td>
-                            <td>${userNames[bonusData.refereeId] || 'Unknown'}</td>
-                            <td>${formattedDate}</td>
-                            <td>${parseFloat(bonusData.amount).toFixed(4)} USDT</td>
-                        `;
-                        tbody.appendChild(tr);
-                    });
-                }).catch(err => {
-                    console.error("Error loading user data for referrals:", err);
-                    tbody.innerHTML = `<tr><td colspan="6" class="no-data">Error loading referrals: ${err.message}</td></tr>`;
-                });
-
-            }).catch(err => {
-                console.error("Error loading referrals:", err);
-                tbody.innerHTML = `<tr><td colspan="6" class="no-data">Error loading referrals: ${err.message}</td></tr>`;
-            });
-        }
-
+         // --- New Functions for SMS Tab --- //
         function loadCurrentSMS() {
             const displayElement = document.getElementById('current-message-display');
+            const statusElement = document.getElementById('sms-status-message');
             adminMessageRef.once('value').then(snapshot => {
                 const messageData = snapshot.val();
                 if (displayElement) {
@@ -1106,37 +667,38 @@
                 }
             }).catch(err => {
                 console.error("Error loading current SMS:", err);
-                const statusElement = document.getElementById('sms-status-message');
                 if (statusElement) {
                     statusElement.textContent = "Error loading message.";
                     statusElement.className = "error";
-                    setTimeout(() => { statusElement.textContent = ""; statusElement.className = ""; }, 3000);
+                     setTimeout(() => { statusElement.textContent = ""; statusElement.className = ""; }, 3000);
                 }
             });
         }
 
         function sendSMS() {
-            const inputElement = document.getElementById('sms-message-input');
-            const statusElement = document.getElementById('sms-status-message');
-            const messageText = inputElement?.value.trim();
-            if (!messageText) {
-                if (statusElement) {
-                    statusElement.textContent = "Please enter a message.";
-                    statusElement.className = "error";
-                    setTimeout(() => { statusElement.textContent = ""; statusElement.className = ""; }, 3000);
-                }
-                return;
-            }
-            adminMessageRef.set({ text: messageText, timestamp: new Date().toISOString() })
+             const inputElement = document.getElementById('sms-message-input');
+             const statusElement = document.getElementById('sms-status-message');
+             const messageText = inputElement?.value.trim();
+
+             if (!messageText) {
+                 if (statusElement) {
+                     statusElement.textContent = "Please enter a message.";
+                     statusElement.className = "error";
+                      setTimeout(() => { statusElement.textContent = ""; statusElement.className = ""; }, 3000);
+                 }
+                 return;
+             }
+
+             adminMessageRef.set({ text: messageText, timestamp: new Date().toISOString() })
                 .then(() => {
                     console.log("SMS sent successfully to Firebase.");
                     if (statusElement) {
                         statusElement.textContent = "Message sent successfully!";
                         statusElement.className = "success";
                     }
-                    if (inputElement) inputElement.value = '';
-                    loadCurrentSMS();
-                    setTimeout(() => {
+                    if (inputElement) inputElement.value = ''; // Clear input
+                    loadCurrentSMS(); // Refresh display
+                     setTimeout(() => {
                         if (statusElement) {
                             statusElement.textContent = "";
                             statusElement.className = "";
@@ -1148,7 +710,7 @@
                     if (statusElement) {
                         statusElement.textContent = "Error sending message: " + err.message;
                         statusElement.className = "error";
-                        setTimeout(() => { statusElement.textContent = ""; statusElement.className = ""; }, 5000);
+                         setTimeout(() => { statusElement.textContent = ""; statusElement.className = ""; }, 5000);
                     }
                 });
         }
@@ -1156,7 +718,7 @@
         function deleteSMS() {
             const statusElement = document.getElementById('sms-status-message');
             if (!confirm("Are you sure you want to delete the current message?")) {
-                return;
+                return; // User cancelled
             }
             adminMessageRef.remove()
                 .then(() => {
@@ -1165,8 +727,8 @@
                         statusElement.textContent = "Message deleted successfully!";
                         statusElement.className = "success";
                     }
-                    loadCurrentSMS();
-                    setTimeout(() => {
+                    loadCurrentSMS(); // Refresh display
+                     setTimeout(() => {
                         if (statusElement) {
                             statusElement.textContent = "";
                             statusElement.className = "";
@@ -1178,124 +740,22 @@
                     if (statusElement) {
                         statusElement.textContent = "Error deleting message: " + err.message;
                         statusElement.className = "error";
-                        setTimeout(() => { statusElement.textContent = ""; statusElement.className = ""; }, 5000);
+                         setTimeout(() => { statusElement.textContent = ""; statusElement.className = ""; }, 5000);
                     }
                 });
         }
 
+        // Attach event listeners for SMS buttons
         document.getElementById('send-sms-btn')?.addEventListener('click', sendSMS);
         document.getElementById('delete-sms-btn')?.addEventListener('click', deleteSMS);
-
-        function loadAppSettings() {
-            const inputElement = document.getElementById('ad-zone-input');
-            const statusElement = document.getElementById('settings-status-message');
-            appSettingsRef.once('value').then(snapshot => {
-                const settingsData = snapshot.val();
-                if (inputElement && settingsData && settingsData.adZoneId) {
-                    inputElement.value = settingsData.adZoneId;
-                }
-                if(statusElement) {
-                    statusElement.textContent = "";
-                    statusElement.className = "";
-                }
-            }).catch(err => {
-                console.error("Error loading app settings:", err);
-                if(statusElement) {
-                    statusElement.textContent = "Error loading settings.";
-                    statusElement.className = "error";
-                    setTimeout(() => { statusElement.textContent = ""; statusElement.className = ""; }, 3000);
-                }
-            });
-        }
-
-        function saveAppSettings() {
-            const inputElement = document.getElementById('ad-zone-input');
-            const statusElement = document.getElementById('settings-status-message');
-            const newAdZoneId = inputElement?.value.trim();
-
-            if (!newAdZoneId) {
-                if(statusElement) {
-                    statusElement.textContent = "Please enter a valid Ad Zone ID.";
-                    statusElement.className = "error";
-                    setTimeout(() => { statusElement.textContent = ""; statusElement.className = ""; }, 3000);
-                }
-                return;
-            }
-
-            appSettingsRef.update({ adZoneId: newAdZoneId })
-                .then(() => {
-                    console.log("App settings updated successfully.");
-                    if(statusElement) {
-                        statusElement.textContent = "Settings saved successfully!";
-                        statusElement.className = "success";
-                        setTimeout(() => { statusElement.textContent = ""; statusElement.className = ""; }, 3000);
-                    }
-                })
-                .catch(err => {
-                    console.error("Error saving app settings:", err);
-                    if(statusElement) {
-                        statusElement.textContent = "Error saving settings: " + err.message;
-                        statusElement.className = "error";
-                        setTimeout(() => { statusElement.textContent = ""; statusElement.className = ""; }, 5000);
-                    }
-                });
-        }
-
-        document.getElementById('save-settings-btn')?.addEventListener('click', saveAppSettings);
-
-        function loadThemeSettings() {
-            appSettingsRef.once('value').then(snapshot => {
-                const settingsData = snapshot.val();
-                if (settingsData && settingsData.theme) {
-                    document.getElementById('primary-color').value = settingsData.theme.primary || '#1e88e5';
-                    document.getElementById('background-color').value = settingsData.theme.background || '#000000';
-                    document.getElementById('success-color').value = settingsData.theme.success || '#43a047';
-                    document.getElementById('danger-color').value = settingsData.theme.danger || '#e53935';
-                }
-            }).catch(err => {
-                console.error("Error loading theme settings:", err);
-                const statusElement = document.getElementById('theme-status-message');
-                if (statusElement) {
-                    statusElement.textContent = "Error loading theme.";
-                    statusElement.className = "error";
-                    setTimeout(() => { statusElement.textContent = ""; statusElement.className = ""; }, 3000);
-                }
-            });
-        }
-
-        function saveThemeSettings() {
-            const theme = {
-                primary: document.getElementById('primary-color').value,
-                background: document.getElementById('background-color').value,
-                success: document.getElementById('success-color').value,
-                danger: document.getElementById('danger-color').value
-            };
-            appSettingsRef.update({ theme: theme })
-                .then(() => {
-                    const statusElement = document.getElementById('theme-status-message');
-                    if (statusElement) {
-                        statusElement.textContent = "Theme saved successfully!";
-                        statusElement.className = "success";
-                        setTimeout(() => { statusElement.textContent = ""; statusElement.className = ""; }, 3000);
-                    }
-                })
-                .catch(err => {
-                    console.error("Error saving theme settings:", err);
-                    const statusElement = document.getElementById('theme-status-message');
-                    if (statusElement) {
-                        statusElement.textContent = "Error saving theme: " + err.message;
-                        statusElement.className = "error";
-                        setTimeout(() => { statusElement.textContent = ""; statusElement.className = ""; }, 5000);
-                    }
-                });
-        }
-
-        document.getElementById('save-theme-btn')?.addEventListener('click', saveThemeSettings);
-
+        // --- End New Functions --- //
+        // Initialize
         window.onload = function() {
             loadDashboardStats();
-            loadWithdrawals();
-            loadReferrals();
+            // Load withdrawals on initial load or when tab is activated
+            // You might want to add an event listener for the tab switch as well
+             loadWithdrawals();
+             // Load initial SMS state if needed elsewhere, but it's loaded on tab click
         };
     </script>
 </body>
