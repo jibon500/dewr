@@ -217,8 +217,8 @@
             font-style: italic;
         }
         #ad-views-card {
-             background: rgba(106, 27, 154, 0.15);
-             border: 1px solid rgba(106, 27, 154, 0.3);
+            background: rgba(106, 27, 154, 0.15);
+            border: 1px solid rgba(106, 27, 154, 0.3);
         }
         #ad-views-card h3 {
             color: #ce93d8;
@@ -247,8 +247,8 @@
             color: #aaa;
         }
         #current-message-display.has-content {
-             font-style: normal;
-             color: #f5f5f5;
+            font-style: normal;
+            color: #f5f5f5;
         }
         #sms-status-message {
             margin-top: 10px;
@@ -352,6 +352,7 @@
                 <button class="tab-btn" data-tab="referrals">👥 Referrals</button>
                 <button class="tab-btn" data-tab="sms">✉️ SMS</button>
                 <button class="tab-btn" data-tab="settings">⚙️ Settings</button>
+                <button class="tab-btn" data-tab="theme">🎨 Theme</button>
             </div>
         </header>
         <!-- Dashboard Tab -->
@@ -373,11 +374,11 @@
                     <h3>Successful Referrals</h3>
                     <div class="value" id="total-referrals">0</div>
                 </div>
-                 <div class="stat-card">
+                <div class="stat-card">
                     <h3>Pending Withdrawals</h3>
                     <div class="value" id="pending-withdrawals">0</div>
                 </div>
-                 <div class="stat-card">
+                <div class="stat-card">
                     <h3>New Users (Today)</h3>
                     <div class="value" id="new-users-today">0</div>
                 </div>
@@ -487,7 +488,7 @@
             <div class="card">
                 <div class="card-header">
                     <h2>Current Message</h2>
-                     <button id="delete-sms-btn" class="btn btn-delete">Delete Message</button>
+                    <button id="delete-sms-btn" class="btn btn-delete">Delete Message</button>
                 </div>
                 <div id="current-message-display">No message set.</div>
             </div>
@@ -505,8 +506,32 @@
                 <div id="settings-status-message" style="margin-top: 15px; text-align: center; min-height: 20px;"></div>
             </div>
         </div>
+        <div id="theme" class="tab-content">
+            <div class="card">
+                <div class="card-header">
+                    <h2>🎨 Theme Settings</h2>
+                </div>
+                <div class="form-group-modal">
+                    <label for="primary-color">Primary Color:</label>
+                    <input type="color" id="primary-color">
+                </div>
+                <div class="form-group-modal">
+                    <label for="background-color">Background Color:</label>
+                    <input type="color" id="background-color">
+                </div>
+                <div class="form-group-modal">
+                    <label for="success-color">Success Color:</label>
+                    <input type="color" id="success-color">
+                </div>
+                <div class="form-group-modal">
+                    <label for="danger-color">Danger Color:</label>
+                    <input type="color" id="danger-color">
+                </div>
+                <button id="save-theme-btn" class="btn" style="background-color: var(--primary);">Save Theme</button>
+                <div id="theme-status-message" style="margin-top: 15px; text-align: center; min-height: 20px;"></div>
+            </div>
+        </div>
     </div>
-
     <div id="editUserModal" class="modal">
         <div class="modal-content">
             <div class="modal-header">
@@ -519,7 +544,7 @@
             </div>
             <div class="form-group-modal">
                 <label for="edit-user-balance">Balance (USDT):</label>
-                <input type="number" id="edit-user-balance" step="0.0001">
+                <input type="number" id="edit-user-balance" step="0.0001" min="0">
             </div>
             <div class="modal-actions">
                 <button id="cancel-edit-btn" class="btn">Cancel</button>
@@ -527,7 +552,6 @@
             </div>
         </div>
     </div>
-
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyD3BGZ0MVLpbQbIpLUAnYvWNEIyk7Y6S0Q",
@@ -558,6 +582,7 @@
                 if (btn.dataset.tab === 'dashboard') loadDashboardStats();
                 if (btn.dataset.tab === 'sms') loadCurrentSMS();
                 if (btn.dataset.tab === 'settings') loadAppSettings();
+                if (btn.dataset.tab === 'theme') loadThemeSettings();
             });
         });
 
@@ -819,13 +844,14 @@
 
         function toggleUserBlock(userId, isCurrentlyBlocked) {
             const newStatus = !isCurrentlyBlocked;
-            database.ref(`users/${userId}/isBlocked`).set(newStatus)
+            database.ref(`users/${userId}`).update({ isBlocked: newStatus })
                 .then(() => {
                     alert(`User ${newStatus ? 'blocked' : 'unblocked'} successfully!`);
                     loadUsers();
+                    loadDashboardStats();
                 })
                 .catch(err => {
-                    console.error("Error updating user status:", err);
+                    console.error("Error updating user block status:", err);
                     alert('Error updating user status: ' + err.message);
                 });
         }
@@ -833,7 +859,7 @@
         function openEditUserModal(userId, currentBalance) {
             currentEditUserId = userId;
             document.getElementById('edit-user-id').value = userId;
-            document.getElementById('edit-user-balance').value = currentBalance.toFixed(4);
+            document.getElementById('edit-user-balance').value = parseFloat(currentBalance).toFixed(4);
             document.getElementById('editUserModal').style.display = 'block';
         }
 
@@ -843,13 +869,16 @@
         }
 
         function saveUserEdit() {
-            if (!currentEditUserId) return;
-            const newBalance = parseFloat(document.getElementById('edit-user-balance').value);
-            if (isNaN(newBalance)) {
-                alert('Please enter a valid balance.');
+            if (!currentEditUserId) {
+                alert('No user selected for editing.');
                 return;
             }
-            database.ref(`users/${currentEditUserId}/userUSDTBalance`).set(newBalance)
+            const newBalance = parseFloat(document.getElementById('edit-user-balance').value);
+            if (isNaN(newBalance) || newBalance < 0) {
+                alert('Please enter a valid non-negative balance.');
+                return;
+            }
+            database.ref(`users/${currentEditUserId}`).update({ userUSDTBalance: newBalance })
                 .then(() => {
                     alert('User balance updated successfully!');
                     closeEditUserModal();
@@ -942,7 +971,6 @@
                 return;
             }
             
-            // Update UI to show processing
             const row = document.getElementById(`withdrawal-${userId}-${requestId}`);
             if (row) {
                 const actionCell = row.cells[7];
@@ -952,20 +980,17 @@
                 statusCell.innerHTML = `<span class="status status-processing">processing</span>`;
             }
             
-            // Update Firebase status to processing
             const requestRef = database.ref(`withdrawals/${userId}/${requestId}/status`);
             requestRef.set('processing')
                 .then(() => {
-                    // Simulate processing delay
                     setTimeout(() => {
-                        // Complete the actual action
                         completeWithdrawalAction(userId, requestId, action);
                     }, 2000);
                 })
                 .catch(err => {
                     console.error("Error setting status to processing:", err);
                     alert('Error processing request: ' + err.message);
-                    loadWithdrawals(); // Reload to reset
+                    loadWithdrawals();
                 });
         }
 
@@ -1012,58 +1037,58 @@
         }
 
         function loadReferrals() {
-             const tbody = document.getElementById('referrals-tbody');
-             tbody.innerHTML = '<tr><td colspan="6" class="no-data">Loading referrals...</td></tr>';
+            const tbody = document.getElementById('referrals-tbody');
+            tbody.innerHTML = '<tr><td colspan="6" class="no-data">Loading referrals...</td></tr>';
 
-             const referralsRef = database.ref('referralBonuses');
-             referralsRef.once('value').then(snapshot => {
-                 const referralData = snapshot.val();
-                 tbody.innerHTML = '';
+            const referralsRef = database.ref('referralBonuses');
+            referralsRef.once('value').then(snapshot => {
+                const referralData = snapshot.val();
+                tbody.innerHTML = '';
 
-                 if (!referralData) {
-                     tbody.innerHTML = '<tr><td colspan="6" class="no-data">No referrals found</td></tr>';
-                     return;
-                 }
+                if (!referralData) {
+                    tbody.innerHTML = '<tr><td colspan="6" class="no-data">No referrals found</td></tr>';
+                    return;
+                }
 
-                 database.ref('users').once('value').then(userSnapshot => {
-                     const userData = userSnapshot.val();
-                     const userNames = {};
-                     if (userData) {
-                         Object.entries(userData).forEach(([uid, udata]) => {
-                             userNames[uid] = udata.telegramUser?.name || 'Unknown';
-                         });
-                     }
+                database.ref('users').once('value').then(userSnapshot => {
+                    const userData = userSnapshot.val();
+                    const userNames = {};
+                    if (userData) {
+                        Object.entries(userData).forEach(([uid, udata]) => {
+                            userNames[uid] = udata.telegramUser?.name || 'Unknown';
+                        });
+                    }
 
-                     const referralList = Object.entries(referralData);
-                     if (referralList.length === 0) {
-                         tbody.innerHTML = '<tr><td colspan="6" class="no-data">No referrals found</td></tr>';
-                         return;
-                     }
+                    const referralList = Object.entries(referralData);
+                    if (referralList.length === 0) {
+                        tbody.innerHTML = '<tr><td colspan="6" class="no-data">No referrals found</td></tr>';
+                        return;
+                    }
 
-                     referralList.sort((a, b) => new Date(b[1].timestamp) - new Date(a[1].timestamp));
+                    referralList.sort((a, b) => new Date(b[1].timestamp) - new Date(a[1].timestamp));
 
-                     referralList.forEach(([bonusId, bonusData]) => {
-                         const tr = document.createElement('tr');
-                         const formattedDate = new Date(bonusData.timestamp).toLocaleString();
-                         tr.innerHTML = `
-                             <td>${bonusData.referrerId}</td>
-                             <td>${userNames[bonusData.referrerId] || 'Unknown'}</td>
-                             <td>${bonusData.refereeId}</td>
-                             <td>${userNames[bonusData.refereeId] || 'Unknown'}</td>
-                             <td>${formattedDate}</td>
-                             <td>${parseFloat(bonusData.amount).toFixed(4)} USDT</td>
-                         `;
-                         tbody.appendChild(tr);
-                     });
-                 }).catch(err => {
-                     console.error("Error loading user data for referrals:", err);
-                     tbody.innerHTML = `<tr><td colspan="6" class="no-data">Error loading referrals: ${err.message}</td></tr>`;
-                 });
+                    referralList.forEach(([bonusId, bonusData]) => {
+                        const tr = document.createElement('tr');
+                        const formattedDate = new Date(bonusData.timestamp).toLocaleString();
+                        tr.innerHTML = `
+                            <td>${bonusData.referrerId}</td>
+                            <td>${userNames[bonusData.referrerId] || 'Unknown'}</td>
+                            <td>${bonusData.refereeId}</td>
+                            <td>${userNames[bonusData.refereeId] || 'Unknown'}</td>
+                            <td>${formattedDate}</td>
+                            <td>${parseFloat(bonusData.amount).toFixed(4)} USDT</td>
+                        `;
+                        tbody.appendChild(tr);
+                    });
+                }).catch(err => {
+                    console.error("Error loading user data for referrals:", err);
+                    tbody.innerHTML = `<tr><td colspan="6" class="no-data">Error loading referrals: ${err.message}</td></tr>`;
+                });
 
-             }).catch(err => {
-                 console.error("Error loading referrals:", err);
-                 tbody.innerHTML = `<tr><td colspan="6" class="no-data">Error loading referrals: ${err.message}</td></tr>`;
-             });
+            }).catch(err => {
+                console.error("Error loading referrals:", err);
+                tbody.innerHTML = `<tr><td colspan="6" class="no-data">Error loading referrals: ${err.message}</td></tr>`;
+            });
         }
 
         function loadCurrentSMS() {
@@ -1085,23 +1110,24 @@
                 if (statusElement) {
                     statusElement.textContent = "Error loading message.";
                     statusElement.className = "error";
-                     setTimeout(() => { statusElement.textContent = ""; statusElement.className = ""; }, 3000);
+                    setTimeout(() => { statusElement.textContent = ""; statusElement.className = ""; }, 3000);
                 }
             });
         }
+
         function sendSMS() {
-             const inputElement = document.getElementById('sms-message-input');
-             const statusElement = document.getElementById('sms-status-message');
-             const messageText = inputElement?.value.trim();
-             if (!messageText) {
-                 if (statusElement) {
-                     statusElement.textContent = "Please enter a message.";
-                     statusElement.className = "error";
-                      setTimeout(() => { statusElement.textContent = ""; statusElement.className = ""; }, 3000);
-                 }
-                 return;
-             }
-             adminMessageRef.set({ text: messageText, timestamp: new Date().toISOString() })
+            const inputElement = document.getElementById('sms-message-input');
+            const statusElement = document.getElementById('sms-status-message');
+            const messageText = inputElement?.value.trim();
+            if (!messageText) {
+                if (statusElement) {
+                    statusElement.textContent = "Please enter a message.";
+                    statusElement.className = "error";
+                    setTimeout(() => { statusElement.textContent = ""; statusElement.className = ""; }, 3000);
+                }
+                return;
+            }
+            adminMessageRef.set({ text: messageText, timestamp: new Date().toISOString() })
                 .then(() => {
                     console.log("SMS sent successfully to Firebase.");
                     if (statusElement) {
@@ -1110,7 +1136,7 @@
                     }
                     if (inputElement) inputElement.value = '';
                     loadCurrentSMS();
-                     setTimeout(() => {
+                    setTimeout(() => {
                         if (statusElement) {
                             statusElement.textContent = "";
                             statusElement.className = "";
@@ -1122,10 +1148,11 @@
                     if (statusElement) {
                         statusElement.textContent = "Error sending message: " + err.message;
                         statusElement.className = "error";
-                         setTimeout(() => { statusElement.textContent = ""; statusElement.className = ""; }, 5000);
+                        setTimeout(() => { statusElement.textContent = ""; statusElement.className = ""; }, 5000);
                     }
                 });
         }
+
         function deleteSMS() {
             const statusElement = document.getElementById('sms-status-message');
             if (!confirm("Are you sure you want to delete the current message?")) {
@@ -1139,7 +1166,7 @@
                         statusElement.className = "success";
                     }
                     loadCurrentSMS();
-                     setTimeout(() => {
+                    setTimeout(() => {
                         if (statusElement) {
                             statusElement.textContent = "";
                             statusElement.className = "";
@@ -1151,10 +1178,11 @@
                     if (statusElement) {
                         statusElement.textContent = "Error deleting message: " + err.message;
                         statusElement.className = "error";
-                         setTimeout(() => { statusElement.textContent = ""; statusElement.className = ""; }, 5000);
+                        setTimeout(() => { statusElement.textContent = ""; statusElement.className = ""; }, 5000);
                     }
                 });
         }
+
         document.getElementById('send-sms-btn')?.addEventListener('click', sendSMS);
         document.getElementById('delete-sms-btn')?.addEventListener('click', deleteSMS);
 
@@ -1167,8 +1195,8 @@
                     inputElement.value = settingsData.adZoneId;
                 }
                 if(statusElement) {
-                     statusElement.textContent = "";
-                     statusElement.className = "";
+                    statusElement.textContent = "";
+                    statusElement.className = "";
                 }
             }).catch(err => {
                 console.error("Error loading app settings:", err);
@@ -1214,6 +1242,55 @@
         }
 
         document.getElementById('save-settings-btn')?.addEventListener('click', saveAppSettings);
+
+        function loadThemeSettings() {
+            appSettingsRef.once('value').then(snapshot => {
+                const settingsData = snapshot.val();
+                if (settingsData && settingsData.theme) {
+                    document.getElementById('primary-color').value = settingsData.theme.primary || '#1e88e5';
+                    document.getElementById('background-color').value = settingsData.theme.background || '#000000';
+                    document.getElementById('success-color').value = settingsData.theme.success || '#43a047';
+                    document.getElementById('danger-color').value = settingsData.theme.danger || '#e53935';
+                }
+            }).catch(err => {
+                console.error("Error loading theme settings:", err);
+                const statusElement = document.getElementById('theme-status-message');
+                if (statusElement) {
+                    statusElement.textContent = "Error loading theme.";
+                    statusElement.className = "error";
+                    setTimeout(() => { statusElement.textContent = ""; statusElement.className = ""; }, 3000);
+                }
+            });
+        }
+
+        function saveThemeSettings() {
+            const theme = {
+                primary: document.getElementById('primary-color').value,
+                background: document.getElementById('background-color').value,
+                success: document.getElementById('success-color').value,
+                danger: document.getElementById('danger-color').value
+            };
+            appSettingsRef.update({ theme: theme })
+                .then(() => {
+                    const statusElement = document.getElementById('theme-status-message');
+                    if (statusElement) {
+                        statusElement.textContent = "Theme saved successfully!";
+                        statusElement.className = "success";
+                        setTimeout(() => { statusElement.textContent = ""; statusElement.className = ""; }, 3000);
+                    }
+                })
+                .catch(err => {
+                    console.error("Error saving theme settings:", err);
+                    const statusElement = document.getElementById('theme-status-message');
+                    if (statusElement) {
+                        statusElement.textContent = "Error saving theme: " + err.message;
+                        statusElement.className = "error";
+                        setTimeout(() => { statusElement.textContent = ""; statusElement.className = ""; }, 5000);
+                    }
+                });
+        }
+
+        document.getElementById('save-theme-btn')?.addEventListener('click', saveThemeSettings);
 
         window.onload = function() {
             loadDashboardStats();
