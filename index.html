@@ -461,7 +461,7 @@
                     <label for="monetagDailyLimit">Global Monetag Daily Task Limit:</label>
                     <input type="number" id="monetagDailyLimit" min="0" placeholder="e.g., 1000">
                 </div>
-                <div class="form-group">
+                 <div class="form-group">
                     <label for="monetagRewardPerTask">Reward Per Monetag Ad View (USDT):</label>
                     <input type="number" id="monetagRewardPerTask" step="0.0001" min="0" placeholder="e.g., 0.0001">
                 </div>
@@ -549,7 +549,7 @@
                 if (data) {
                     document.getElementById('monetagDailyLimit').value = data.dailyTaskLimit || '';
                     document.getElementById('monetagAdZoneId').value = data.adZoneId || '';
-                    document.getElementById('monetagRewardPerTask').value = data.rewardPerTaskUSD || '';
+                     document.getElementById('monetagRewardPerTask').value = data.rewardPerTaskUSD || '';
                 }
             }).catch(err => {
                 console.error("Error loading app settings:", err);
@@ -571,7 +571,7 @@
         function saveSettings() {
             const dailyLimit = parseInt(document.getElementById('monetagDailyLimit').value, 10);
             const adZoneId = document.getElementById('monetagAdZoneId').value.trim();
-            const rewardPerTask = parseFloat(document.getElementById('monetagRewardPerTask').value);
+             const rewardPerTask = parseFloat(document.getElementById('monetagRewardPerTask').value);
             const adminMsg = document.getElementById('adminMessage').value.trim();
 
             const updates = {};
@@ -582,9 +582,9 @@
             if (adZoneId) {
                 updates['appSettings/adZoneId'] = adZoneId;
             }
-            if (!isNaN(rewardPerTask) && rewardPerTask >= 0) {
-                updates['appSettings/rewardPerTaskUSD'] = rewardPerTask;
-            }
+             if (!isNaN(rewardPerTask) && rewardPerTask >= 0) {
+                 updates['appSettings/rewardPerTaskUSD'] = rewardPerTask;
+             }
             updates['adminMessage/text'] = adminMsg || "";
 
             database.ref().update(updates)
