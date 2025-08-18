@@ -457,13 +457,17 @@
         <div id="settings" class="section">
             <div class="card">
                 <h2>App Settings</h2>
-                <div class="form-group">
-                    <label for="monetagDailyLimit">Global Monetag Daily Task Limit:</label>
-                    <input type="number" id="monetagDailyLimit" min="0" placeholder="e.g., 1000">
-                </div>
                  <div class="form-group">
                     <label for="monetagRewardPerTask">Reward Per Monetag Ad View (USDT):</label>
                     <input type="number" id="monetagRewardPerTask" step="0.0001" min="0" placeholder="e.g., 0.0001">
+                </div>
+                <div class="form-group">
+                    <label for="minimumWithdrawalAmount">Minimum Withdrawal Amount (USDT):</label>
+                    <input type="number" id="minimumWithdrawalAmount" step="0.01" min="0" placeholder="e.g., 5.00">
+                </div>
+                 <div class="form-group">
+                    <label for="monetagDailyLimit">Global Monetag Daily Task Limit (Per User):</label>
+                    <input type="number" id="monetagDailyLimit" min="0" placeholder="e.g., 1000">
                 </div>
                 <div class="form-group">
                     <label for="monetagAdZoneId">Monetag Ad Zone ID:</label>
@@ -549,7 +553,8 @@
                 if (data) {
                     document.getElementById('monetagDailyLimit').value = data.dailyTaskLimit || '';
                     document.getElementById('monetagAdZoneId').value = data.adZoneId || '';
-                     document.getElementById('monetagRewardPerTask').value = data.rewardPerTaskUSD || '';
+                    document.getElementById('monetagRewardPerTask').value = data.rewardPerTaskUSD || '';
+                    document.getElementById('minimumWithdrawalAmount').value = data.minimumWithdrawalAmount || '';
                 }
             }).catch(err => {
                 console.error("Error loading app settings:", err);
@@ -571,7 +576,8 @@
         function saveSettings() {
             const dailyLimit = parseInt(document.getElementById('monetagDailyLimit').value, 10);
             const adZoneId = document.getElementById('monetagAdZoneId').value.trim();
-             const rewardPerTask = parseFloat(document.getElementById('monetagRewardPerTask').value);
+            const rewardPerTask = parseFloat(document.getElementById('monetagRewardPerTask').value);
+            const minWithdrawal = parseFloat(document.getElementById('minimumWithdrawalAmount').value);
             const adminMsg = document.getElementById('adminMessage').value.trim();
 
             const updates = {};
@@ -582,9 +588,12 @@
             if (adZoneId) {
                 updates['appSettings/adZoneId'] = adZoneId;
             }
-             if (!isNaN(rewardPerTask) && rewardPerTask >= 0) {
-                 updates['appSettings/rewardPerTaskUSD'] = rewardPerTask;
-             }
+            if (!isNaN(rewardPerTask) && rewardPerTask >= 0) {
+                updates['appSettings/rewardPerTaskUSD'] = rewardPerTask;
+            }
+            if (!isNaN(minWithdrawal) && minWithdrawal >= 0) {
+                 updates['appSettings/minimumWithdrawalAmount'] = minWithdrawal;
+            }
             updates['adminMessage/text'] = adminMsg || "";
 
             database.ref().update(updates)
