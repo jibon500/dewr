@@ -585,12 +585,12 @@
             if (!isNaN(rewardPerTask) && rewardPerTask >= 0) {
                 updates['appSettings/rewardPerTaskUSD'] = rewardPerTask;
             }
-            updates['adminMessage/text'] = adminMsg || ""; // Allow empty string to clear message
+            updates['adminMessage/text'] = adminMsg || "";
 
             database.ref().update(updates)
                 .then(() => {
                     showToast("Settings saved successfully!");
-                    loadSettings(); // Reload to reflect changes
+                    loadSettings();
                 })
                 .catch(err => {
                     console.error("Error saving settings:", err);
@@ -628,6 +628,7 @@
 
                     Object.entries(users).forEach(([userId, userData]) => {
                         const row = document.createElement('tr');
+                        // Use strict boolean check for isBlocked
                         const isBlocked = userData.isBlocked === true;
                         const statusText = isBlocked ? 'Blocked' : 'Active';
                         const statusClass = isBlocked ? 'status-blocked' : 'status-active';
@@ -653,6 +654,7 @@
                     document.querySelectorAll('.toggle-block-btn').forEach(btn => {
                         btn.addEventListener('click', function() {
                             const userId = this.getAttribute('data-user-id');
+                            // Use strict boolean check for data-blocked attribute
                             const isCurrentlyBlocked = this.getAttribute('data-blocked') === 'true';
                             toggleUserBlock(userId, !isCurrentlyBlocked);
                         });
@@ -689,7 +691,6 @@
                         return;
                     }
 
-                    // Sort by timestamp descending
                     allWithdrawals.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 
                     allWithdrawals.forEach(request => {
@@ -717,7 +718,6 @@
                         tbody.appendChild(row);
                     });
 
-                    // Add event listeners to update buttons
                     document.querySelectorAll('.update-status-btn').forEach(btn => {
                         btn.addEventListener('click', function() {
                              const userId = this.getAttribute('data-user-id');
@@ -756,7 +756,6 @@
                         return;
                     }
 
-                    // Sort by timestamp descending
                     referrals.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
 
                     referrals.forEach(ref => {
@@ -785,13 +784,11 @@
              const statTotalEarnings = document.getElementById('statTotalEarnings');
              const statTotalWithdrawals = document.getElementById('statTotalWithdrawals');
 
-            // Total Users
             database.ref('users').once('value').then(snapshot => {
                 const count = snapshot.numChildren();
                 statTotalUsers.textContent = count;
             }).catch(err => console.error("Error loading user count:", err));
 
-            // Total Ad Views (Sum of all users' monetagTasksCompleted)
             database.ref('users').once('value').then(snapshot => {
                 let totalViews = 0;
                 snapshot.forEach(userSnapshot => {
@@ -801,7 +798,6 @@
                 statTotalAdViews.textContent = totalViews;
             }).catch(err => console.error("Error loading ad view count:", err));
 
-            // Total Referrals (Sum of all users' successfulReferrals)
             database.ref('users').once('value').then(snapshot => {
                 let totalReferrals = 0;
                 snapshot.forEach(userSnapshot => {
@@ -811,7 +807,6 @@
                 statTotalReferrals.textContent = totalReferrals;
             }).catch(err => console.error("Error loading referral count:", err));
 
-            // Total Earnings (Sum of all users' userUSDTBalance)
             database.ref('users').once('value').then(snapshot => {
                 let totalEarnings = 0;
                 snapshot.forEach(userSnapshot => {
@@ -821,7 +816,6 @@
                 statTotalEarnings.textContent = totalEarnings.toFixed(4);
             }).catch(err => console.error("Error loading earnings count:", err));
 
-            // Total Withdrawals (Count of all withdrawal requests)
             database.ref('withdrawals').once('value').then(snapshot => {
                 let totalWithdrawals = 0;
                 snapshot.forEach(userSnapshot => {
@@ -833,7 +827,6 @@
             }).catch(err => console.error("Error loading withdrawal count:", err));
         }
 
-
         // --- Action Functions ---
         function toggleUserBlock(userId, block) {
              if (!userId) {
@@ -841,6 +834,7 @@
                  return;
              }
             const action = block ? 'block' : 'unblock';
+            // Set the value to a strict boolean (true or false)
             database.ref(`users/${userId}/isBlocked`).set(block)
                 .then(() => {
                     showToast(`User ${userId} ${action}ed successfully.`);
@@ -860,8 +854,7 @@
             database.ref(`withdrawals/${userId}/${requestId}/status`).set(newStatus)
                 .then(() => {
                     showToast(`Status for request ${requestId} updated to ${newStatus}.`);
-                    loadWithdrawals(); // Refresh the list
-                    // Note: The user app checks the latest request status and updates the button accordingly on load/state change.
+                    loadWithdrawals();
                 })
                 .catch(err => {
                     console.error(`Error updating status for request ${requestId}:`, err);
@@ -878,27 +871,19 @@
 
                 if (currentAdminUid === ADMIN_UID) {
                     console.log("Correct admin account detected. Loading panel...");
-                    // Load initial data
                     loadUsers();
                     loadWithdrawals();
                     loadReferrals();
                     loadSettings();
-                    loadDashboardStats(); // Load initial stats
-
-                    // Set up periodic refresh for dashboard stats (adjust interval as needed)
-                    setInterval(loadDashboardStats, 30000); // Refresh stats every 30s
-
+                    loadDashboardStats();
+                    setInterval(loadDashboardStats, 30000);
                 } else {
                     console.error("Authenticated user is not the designated admin.");
                     showToast("Access denied. Not the designated admin account.", true);
-                    // Optionally, sign out the non-admin user
-                    // auth.signOut();
                 }
             } else {
-                console.log("Admin not authenticated. Redirecting to login or showing login prompt...");
+                console.log("Admin not authenticated.");
                 showToast("Please log in with the admin account.", true);
-                // In a real app, you might redirect to a login page or trigger a login flow here.
-                // For simplicity, we assume the correct account is already logged in the browser.
             }
         });
 
@@ -906,7 +891,6 @@
         logoutBtn.addEventListener('click', () => {
             auth.signOut().then(() => {
                 showToast("Logged out successfully.");
-                // Reload the page or redirect after logout
                 window.location.reload();
             }).catch((error) => {
                 console.error('Logout error:', error);
@@ -921,19 +905,17 @@
                 const target = button.getAttribute('data-target');
                 setActiveSection(target);
 
-                // Load data for the selected section if needed
                 if (target === 'users') loadUsers();
                 if (target === 'withdrawals') loadWithdrawals();
                 if (target === 'referrals') loadReferrals();
-                if (target === 'settings') loadSettings(); // Reload in case changed elsewhere
-                if (target === 'dashboard') loadDashboardStats(); // Refresh stats on dashboard view
+                if (target === 'settings') loadSettings();
+                if (target === 'dashboard') loadDashboardStats();
             });
         });
 
         document.getElementById('saveSettingsBtn').addEventListener('click', saveSettings);
         document.getElementById('deleteAdminMessageBtn').addEventListener('click', deleteAdminMessage);
 
-        // --- Initialize Dark Mode ---
         if (localStorage.getItem('darkMode') === 'true') {
             document.body.classList.add('dark-mode');
         }
