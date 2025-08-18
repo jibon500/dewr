@@ -171,10 +171,10 @@
         }
 
         .status-pending { background-color: rgba(249, 171, 0, 0.2); color: var(--warning-color); }
-        .status-approved { background-color: rgba(52, 168, 89, 0.2); color: var(--success-color); }
+        .status-approved { background-color: rgba(52, 168, 83, 0.2); color: var(--success-color); }
         .status-rejected { background-color: rgba(234, 67, 53, 0.2); color: var(--danger-color); }
         .status-blocked { background-color: rgba(234, 67, 53, 0.2); color: var(--danger-color); }
-        .status-active { background-color: rgba(52, 168, 89, 0.2); color: var(--success-color); }
+        .status-active { background-color: rgba(52, 168, 83, 0.2); color: var(--success-color); }
 
         .action-cell {
             display: flex;
@@ -461,13 +461,13 @@
                     <label for="monetagRewardPerTask">Reward Per Monetag Ad View (USDT):</label>
                     <input type="number" id="monetagRewardPerTask" step="0.0001" min="0" placeholder="e.g., 0.0001">
                 </div>
-                <div class="form-group">
+                 <div class="form-group">
                     <label for="minimumWithdrawalAmount">Minimum Withdrawal Amount (USDT):</label>
                     <input type="number" id="minimumWithdrawalAmount" step="0.01" min="0" placeholder="e.g., 5.00">
                 </div>
                  <div class="form-group">
-                    <label for="monetagDailyLimit">Global Monetag Daily Task Limit (Per User):</label>
-                    <input type="number" id="monetagDailyLimit" min="0" placeholder="e.g., 1000">
+                    <label for="userDailyTaskLimit">User Daily Task Limit (Per User):</label>
+                    <input type="number" id="userDailyTaskLimit" min="0" placeholder="e.g., 1000">
                 </div>
                 <div class="form-group">
                     <label for="monetagAdZoneId">Monetag Ad Zone ID:</label>
@@ -551,9 +551,9 @@
             appSettingsRef.once('value').then(snapshot => {
                 const data = snapshot.val();
                 if (data) {
-                     document.getElementById('monetagRewardPerTask').value = data.rewardPerTaskUSD || '';
-                     document.getElementById('minimumWithdrawalAmount').value = data.minimumWithdrawalAmount || '';
-                    document.getElementById('monetagDailyLimit').value = data.dailyTaskLimit || '';
+                    document.getElementById('monetagRewardPerTask').value = data.rewardPerTaskUSD || '';
+                    document.getElementById('minimumWithdrawalAmount').value = data.minimumWithdrawalAmount || '';
+                    document.getElementById('userDailyTaskLimit').value = data.dailyTaskLimit || '';
                     document.getElementById('monetagAdZoneId').value = data.adZoneId || '';
                 }
             }).catch(err => {
@@ -576,7 +576,7 @@
         function saveSettings() {
              const rewardPerTask = parseFloat(document.getElementById('monetagRewardPerTask').value);
              const minWithdrawal = parseFloat(document.getElementById('minimumWithdrawalAmount').value);
-            const dailyLimit = parseInt(document.getElementById('monetagDailyLimit').value, 10);
+             const dailyLimit = parseInt(document.getElementById('userDailyTaskLimit').value, 10);
             const adZoneId = document.getElementById('monetagAdZoneId').value.trim();
             const adminMsg = document.getElementById('adminMessage').value.trim();
 
