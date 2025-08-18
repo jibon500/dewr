@@ -171,10 +171,10 @@
         }
 
         .status-pending { background-color: rgba(249, 171, 0, 0.2); color: var(--warning-color); }
-        .status-approved { background-color: rgba(52, 168, 83, 0.2); color: var(--success-color); }
+        .status-approved { background-color: rgba(52, 168, 89, 0.2); color: var(--success-color); }
         .status-rejected { background-color: rgba(234, 67, 53, 0.2); color: var(--danger-color); }
         .status-blocked { background-color: rgba(234, 67, 53, 0.2); color: var(--danger-color); }
-        .status-active { background-color: rgba(52, 168, 83, 0.2); color: var(--success-color); }
+        .status-active { background-color: rgba(52, 168, 89, 0.2); color: var(--success-color); }
 
         .action-cell {
             display: flex;
@@ -551,10 +551,10 @@
             appSettingsRef.once('value').then(snapshot => {
                 const data = snapshot.val();
                 if (data) {
+                     document.getElementById('monetagRewardPerTask').value = data.rewardPerTaskUSD || '';
+                     document.getElementById('minimumWithdrawalAmount').value = data.minimumWithdrawalAmount || '';
                     document.getElementById('monetagDailyLimit').value = data.dailyTaskLimit || '';
                     document.getElementById('monetagAdZoneId').value = data.adZoneId || '';
-                    document.getElementById('monetagRewardPerTask').value = data.rewardPerTaskUSD || '';
-                    document.getElementById('minimumWithdrawalAmount').value = data.minimumWithdrawalAmount || '';
                 }
             }).catch(err => {
                 console.error("Error loading app settings:", err);
@@ -574,25 +574,25 @@
         }
 
         function saveSettings() {
+             const rewardPerTask = parseFloat(document.getElementById('monetagRewardPerTask').value);
+             const minWithdrawal = parseFloat(document.getElementById('minimumWithdrawalAmount').value);
             const dailyLimit = parseInt(document.getElementById('monetagDailyLimit').value, 10);
             const adZoneId = document.getElementById('monetagAdZoneId').value.trim();
-            const rewardPerTask = parseFloat(document.getElementById('monetagRewardPerTask').value);
-            const minWithdrawal = parseFloat(document.getElementById('minimumWithdrawalAmount').value);
             const adminMsg = document.getElementById('adminMessage').value.trim();
 
             const updates = {};
 
+             if (!isNaN(rewardPerTask) && rewardPerTask >= 0) {
+                 updates['appSettings/rewardPerTaskUSD'] = rewardPerTask;
+             }
+             if (!isNaN(minWithdrawal) && minWithdrawal >= 0) {
+                 updates['appSettings/minimumWithdrawalAmount'] = minWithdrawal;
+             }
             if (!isNaN(dailyLimit)) {
                 updates['appSettings/dailyTaskLimit'] = dailyLimit;
             }
             if (adZoneId) {
                 updates['appSettings/adZoneId'] = adZoneId;
-            }
-            if (!isNaN(rewardPerTask) && rewardPerTask >= 0) {
-                updates['appSettings/rewardPerTaskUSD'] = rewardPerTask;
-            }
-            if (!isNaN(minWithdrawal) && minWithdrawal >= 0) {
-                 updates['appSettings/minimumWithdrawalAmount'] = minWithdrawal;
             }
             updates['adminMessage/text'] = adminMsg || "";
 
